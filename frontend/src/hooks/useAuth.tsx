@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../services/api';
 import type { User, AuthResponse } from '../types/auth';
@@ -87,7 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role?: string;
     phone?: string;
   }) => {
-    await registerMutation.mutateAsync(data);
+    // Cast the role to the specific union type expected by RegisterRequest
+    const registerData = {
+      ...data,
+      role: data.role as "ADMIN" | "TEACHER" | "STUDENT" | undefined
+    };
+    await registerMutation.mutateAsync(registerData);
   };
 
   const logout = () => {

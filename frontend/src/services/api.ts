@@ -60,16 +60,16 @@ api.interceptors.response.use(
 
 export const authApi = {
   login: (data: LoginRequest) =>
-    api.post<AuthResponse>('/auth/login', data),
+    api.post<AuthResponse>('/auth/login', data).then(res => res.data),
   
   register: (data: RegisterRequest) =>
-    api.post<AuthResponse>('/auth/register', data),
+    api.post<AuthResponse>('/auth/register', data).then(res => res.data),
   
   getProfile: () =>
-    api.get<User>('/auth/profile'),
+    api.get<User>('/auth/profile').then(res => res.data),
   
   updateProfile: (data: Partial<User>) =>
-    api.put<User>('/auth/profile', data),
+    api.put<User>('/auth/profile', data).then(res => res.data),
 };
 
 export const get = <T>(url: string, params?: object) =>
