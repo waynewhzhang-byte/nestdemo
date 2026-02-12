@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../services/api';
 import type { User, AuthResponse } from '../types/auth';
 
+type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -14,7 +16,7 @@ interface AuthContextType {
     name: string;
     studentId?: string;
     teacherId?: string;
-    role?: string;
+    role?: UserRole;
     phone?: string;
   }) => Promise<void>;
   logout: () => void;
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: string;
       studentId?: string;
       teacherId?: string;
-      role?: string;
+      role?: UserRole;
       phone?: string;
     }) => authApi.register(data),
     onSuccess: (response: AuthResponse) => {
@@ -84,15 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string;
     studentId?: string;
     teacherId?: string;
-    role?: string;
+    role?: UserRole;
     phone?: string;
   }) => {
-    // Cast the role to the specific union type expected by RegisterRequest
-    const registerData = {
-      ...data,
-      role: data.role as "ADMIN" | "TEACHER" | "STUDENT" | undefined
-    };
-    await registerMutation.mutateAsync(registerData);
+    await registerMutation.mutateAsync(data);
   };
 
   const logout = () => {

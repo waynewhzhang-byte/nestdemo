@@ -4,6 +4,9 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto, UserRole } from './dto/auth.dto';
 
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY = '7d';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -50,6 +53,26 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user);
 
+    return {
+      user: this.sanitizeUser(user),
+      ...tokens,
+    };
+  }
+
+  async refresh(refreshToken: string) {
+    let payload: { sub: string; email: string; role: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, { ignoreExpiration: false });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+    const user = await this.prismaService.user.findUnique({
+      where: { id: payload.sub },
+    });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+    const tokens = await this.generateTokens(user);
     return {
       user: this.sanitizeUser(user),
       ...tokens,
@@ -143,15 +166,15 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
-  private async generateTokens(user: any) {
+  private async generateTokens(user: { id: string; email: string; role: string }) {
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
 
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_EXPIRY });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: REFRESH_TOKEN_EXPIRY });
 
     return { accessToken, refreshToken };
   }

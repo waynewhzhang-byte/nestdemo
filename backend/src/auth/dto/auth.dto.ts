@@ -74,3 +74,9 @@ export class ChangePasswordDto {
   @MinLength(6)
   newPassword: string;
 }
+
+export class RefreshTokenDto {
+  @ApiProperty({ description: 'JWT refresh token' })
+  @IsString()
+  refreshToken: string;
+}
