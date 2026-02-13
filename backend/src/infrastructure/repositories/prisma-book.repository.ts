@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { Book, BookProps } from '../../domain/entities/book.entity';
-import { IBookRepository } from '../../domain/repositories/book.repository.interface';
-import { BookStatus } from '@prisma/client';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { Book, BookProps } from "../../domain/entities/book.entity";
+import { IBookRepository } from "../../domain/repositories/book.repository.interface";
+import { BookStatus } from "@prisma/client";
 
 @Injectable()
 export class PrismaBookRepository implements IBookRepository {
@@ -39,13 +39,18 @@ export class PrismaBookRepository implements IBookRepository {
     return book ? this.toEntity(book) : null;
   }
 
-  async findAll(options?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ books: Book[]; total: number }> {
+  async findAll(options?: {
+    category?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ books: Book[]; total: number }> {
     const where: any = {};
     if (options?.category) where.category = options.category;
     if (options?.search) {
       where.OR = [
-        { title: { contains: options.search, mode: 'insensitive' } },
-        { author: { contains: options.search, mode: 'insensitive' } },
+        { title: { contains: options.search, mode: "insensitive" } },
+        { author: { contains: options.search, mode: "insensitive" } },
       ];
     }
 
@@ -54,12 +59,12 @@ export class PrismaBookRepository implements IBookRepository {
         where,
         take: options?.limit || 20,
         skip: options?.offset || 0,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.book.count({ where }),
     ]);
 
-    return { books: books.map(b => this.toEntity(b)), total };
+    return { books: books.map((b) => this.toEntity(b)), total };
   }
 
   async save(book: Book): Promise<Book> {
@@ -83,10 +88,34 @@ export class PrismaBookRepository implements IBookRepository {
   async incrementAvailableCopies(id: string): Promise<void> {
     await this.prisma.book.update({
       where: { id },
-      data: { 
+      data: {
         availableCopies: { increment: 1 },
         status: BookStatus.AVAILABLE,
       },
     });
+  }
+
+  async update(book: Book): Promise<Book> {
+    const data = book.toJSON();
+    const updated = await this.prisma.book.update({
+      where: { id: book.id },
+      data,
+    });
+    return this.toEntity(updated);
+  }
+
+  async adjustInventory(id: string, adjustment: number): Promise<Book> {
+    const updated = await this.prisma.book.update({
+      where: { id },
+      data: {
+        totalCopies: { increment: adjustment },
+        availableCopies: { increment: adjustment },
+        status:
+          adjustment < 0
+            ? undefined
+            : BookStatus.AVAILABLE,
+      },
+    });
+    return this.toEntity(updated);
   }
 }

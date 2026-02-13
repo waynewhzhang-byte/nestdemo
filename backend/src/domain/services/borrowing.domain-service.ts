@@ -1,12 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { Borrowing, BorrowingProps } from '../entities/borrowing.entity';
-import { Book, BookProps } from '../entities/book.entity';
-import { User, UserProps } from '../entities/user.entity';
-import { IBorrowingRepository } from '../repositories/borrowing.repository.interface';
-import { IBookRepository } from '../repositories/book.repository.interface';
-import { IUserRepository } from '../repositories/user.repository.interface';
-import { DueDate } from '../value-objects';
-import { Role, BorrowingStatus, BookStatus } from '@prisma/client';
+import { Injectable } from "@nestjs/common";
+import { Borrowing, BorrowingProps } from "../entities/borrowing.entity";
+import { DueDate } from "../value-objects";
+import { Role, BorrowingStatus } from "@prisma/client";
+import { PrismaBorrowingRepository } from "../../infrastructure/repositories/prisma-borrowing.repository";
+import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
+import { PrismaUserRepository } from "../../infrastructure/repositories/prisma-user.repository";
 
 export interface BorrowBookParams {
   userId: string;
@@ -33,44 +31,52 @@ const BORROWING_LIMITS: Record<Role, number> = {
 const DEFAULT_BORROW_DAYS = 14;
 const RENEWAL_DAYS = 14;
 const MAX_RENEWALS = 2;
-const OVERDUE_FINE_PER_DAY = 0.50;
+const OVERDUE_FINE_PER_DAY = 0.5;
 
 @Injectable()
 export class BorrowingDomainService {
   constructor(
-    private readonly borrowingRepo: IBorrowingRepository,
-    private readonly bookRepo: IBookRepository,
-    private readonly userRepo: IUserRepository,
+    private readonly borrowingRepo: PrismaBorrowingRepository,
+    private readonly bookRepo: PrismaBookRepository,
+    private readonly userRepo: PrismaUserRepository,
   ) {}
 
-  async borrowBook(params: BorrowBookParams): Promise<{ borrowing: Borrowing; message: string }> {
+  async borrowBook(
+    params: BorrowBookParams,
+  ): Promise<{ borrowing: Borrowing; message: string }> {
     const user = await this.userRepo.findById(params.userId);
     if (!user || !user.isActive) {
-      throw new Error('User account is not active');
+      throw new Error("User account is not active");
     }
 
-    const activeCount = await this.borrowingRepo.countActiveByUserId(params.userId);
+    const activeCount = await this.borrowingRepo.countActiveByUserId(
+      params.userId,
+    );
     const maxBorrowings = BORROWING_LIMITS[user.role];
     if (activeCount >= maxBorrowings) {
-      throw new Error(`You have reached the maximum borrowing limit (${maxBorrowings} books)`);
+      throw new Error(
+        `You have reached the maximum borrowing limit (${maxBorrowings} books)`,
+      );
     }
 
     const book = await this.bookRepo.findById(params.bookId);
     if (!book) {
-      throw new Error('Book not found');
+      throw new Error("Book not found");
     }
     if (!book.canBeBorrowed()) {
-      throw new Error('This book is not available for borrowing');
+      throw new Error("This book is not available for borrowing");
     }
 
-    const existingBorrowing = await this.borrowingRepo.findActiveByBookId(params.bookId);
+    const existingBorrowing = await this.borrowingRepo.findActiveByBookId(
+      params.bookId,
+    );
     if (existingBorrowing && existingBorrowing.userId === params.userId) {
-      throw new Error('You have already borrowed this book');
+      throw new Error("You have already borrowed this book");
     }
 
     const updated = await this.bookRepo.decrementAvailableCopies(params.bookId);
     if (!updated) {
-      throw new Error('No available copies of this book');
+      throw new Error("No available copies of this book");
     }
 
     const borrowDays = params.borrowDays || DEFAULT_BORROW_DAYS;
@@ -92,22 +98,24 @@ export class BorrowingDomainService {
     const borrowing = new Borrowing(borrowingProps);
     const saved = await this.borrowingRepo.save(borrowing);
 
-    return { borrowing: saved, message: 'Book borrowed successfully' };
+    return { borrowing: saved, message: "Book borrowed successfully" };
   }
 
-  async returnBook(params: ReturnBookParams): Promise<{ borrowing: Borrowing; message: string }> {
+  async returnBook(
+    params: ReturnBookParams,
+  ): Promise<{ borrowing: Borrowing; message: string }> {
     const borrowing = await this.borrowingRepo.findById(params.borrowingId);
     if (!borrowing) {
-      throw new Error('Borrowing record not found');
+      throw new Error("Borrowing record not found");
     }
 
     const user = await this.userRepo.findById(params.userId);
     if (borrowing.userId !== params.userId && user?.role !== Role.ADMIN) {
-      throw new Error('You can only return your own borrowed books');
+      throw new Error("You can only return your own borrowed books");
     }
 
     if (borrowing.isReturned()) {
-      throw new Error('This book has already been returned');
+      throw new Error("This book has already been returned");
     }
 
     borrowing.return();
@@ -127,29 +135,33 @@ export class BorrowingDomainService {
 
     return {
       borrowing,
-      message: isOverdue ? 'Book returned. Please note: You have an overdue fine.' : 'Book returned successfully',
+      message: isOverdue
+        ? "Book returned. Please note: You have an overdue fine."
+        : "Book returned successfully",
     };
   }
 
-  async renewBook(params: RenewBookParams): Promise<{ borrowing: Borrowing; message: string }> {
+  async renewBook(
+    params: RenewBookParams,
+  ): Promise<{ borrowing: Borrowing; message: string }> {
     const borrowing = await this.borrowingRepo.findById(params.borrowingId);
     if (!borrowing) {
-      throw new Error('Borrowing record not found');
+      throw new Error("Borrowing record not found");
     }
 
     const user = await this.userRepo.findById(params.userId);
     if (borrowing.userId !== params.userId && user?.role !== Role.ADMIN) {
-      throw new Error('You can only renew your own borrowed books');
+      throw new Error("You can only renew your own borrowed books");
     }
 
     if (!borrowing.canRenew(user?.role || Role.STUDENT)) {
-      throw new Error('This borrowing cannot be renewed');
+      throw new Error("This borrowing cannot be renewed");
     }
 
     const newDueDate = DueDate.create(RENEWAL_DAYS);
     borrowing.renew(newDueDate.getValue());
     const updated = await this.borrowingRepo.update(borrowing);
 
-    return { borrowing: updated, message: 'Borrowing renewed successfully' };
+    return { borrowing: updated, message: "Borrowing renewed successfully" };
   }
 }

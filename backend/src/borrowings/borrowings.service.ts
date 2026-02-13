@@ -5,12 +5,17 @@ import {
   ForbiddenException,
   ConflictException,
   Logger,
-} from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { BorrowingStatus, Role } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { BorrowBookDto, ReturnBookDto, RenewBorrowingDto, QueryBorrowingsDto } from './dto/borrowings.dto';
-import { BorrowingDomainService } from '../domain/services/borrowing.domain-service';
+} from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { BorrowingStatus, Role } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  BorrowBookDto,
+  ReturnBookDto,
+  RenewBorrowingDto,
+  QueryBorrowingsDto,
+} from "./dto/borrowings.dto";
+import { BorrowingDomainService } from "../domain/services/borrowing.domain-service";
 
 @Injectable()
 export class BorrowingsService {
@@ -27,11 +32,13 @@ export class BorrowingsService {
         userId,
         bookId: dto.bookId,
       });
-      
+
       const borrowing = await this.prisma.borrowing.findFirst({
         where: { userId, bookId: dto.bookId, status: BorrowingStatus.ACTIVE },
-        orderBy: { createdAt: 'desc' },
-        include: { book: { select: { id: true, title: true, author: true, isbn: true } } },
+        orderBy: { createdAt: "desc" },
+        include: {
+          book: { select: { id: true, title: true, author: true, isbn: true } },
+        },
       });
 
       return {
@@ -45,10 +52,12 @@ export class BorrowingsService {
         },
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      if (message.includes('not active')) throw new ForbiddenException(message);
-      if (message.includes('reached the maximum')) throw new BadRequestException(message);
-      if (message.includes('already borrowed')) throw new ConflictException(message);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.includes("not active")) throw new ForbiddenException(message);
+      if (message.includes("reached the maximum"))
+        throw new BadRequestException(message);
+      if (message.includes("already borrowed"))
+        throw new ConflictException(message);
       throw new BadRequestException(message);
     }
   }
@@ -75,10 +84,12 @@ export class BorrowingsService {
         },
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      if (message.includes('not found')) throw new NotFoundException(message);
-      if (message.includes('only return')) throw new ForbiddenException(message);
-      if (message.includes('already been returned')) throw new BadRequestException(message);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.includes("not found")) throw new NotFoundException(message);
+      if (message.includes("only return"))
+        throw new ForbiddenException(message);
+      if (message.includes("already been returned"))
+        throw new BadRequestException(message);
       throw new BadRequestException(message);
     }
   }
@@ -103,14 +114,16 @@ export class BorrowingsService {
           dueDate: borrowing?.dueDate,
           renewedCount: borrowing?.renewedCount,
           maxRenewals: borrowing?.maxRenewals,
-          renewalsRemaining: (borrowing?.maxRenewals || 0) - (borrowing?.renewedCount || 0),
+          renewalsRemaining:
+            (borrowing?.maxRenewals || 0) - (borrowing?.renewedCount || 0),
         },
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      if (message.includes('not found')) throw new NotFoundException(message);
-      if (message.includes('only renew')) throw new ForbiddenException(message);
-      if (message.includes('cannot be renewed')) throw new BadRequestException(message);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.includes("not found")) throw new NotFoundException(message);
+      if (message.includes("only renew")) throw new ForbiddenException(message);
+      if (message.includes("cannot be renewed"))
+        throw new BadRequestException(message);
       throw new BadRequestException(message);
     }
   }
@@ -127,9 +140,17 @@ export class BorrowingsService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
-          book: { select: { id: true, title: true, author: true, isbn: true, coverImage: true } },
+          book: {
+            select: {
+              id: true,
+              title: true,
+              author: true,
+              isbn: true,
+              coverImage: true,
+            },
+          },
         },
       }),
       this.prisma.borrowing.count({ where }),
@@ -154,7 +175,7 @@ export class BorrowingsService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           book: { select: { id: true, title: true, author: true, isbn: true } },
           user: { select: { id: true, name: true, email: true, role: true } },
@@ -180,11 +201,13 @@ export class BorrowingsService {
     });
 
     if (!borrowing) {
-      throw new NotFoundException('Borrowing record not found');
+      throw new NotFoundException("Borrowing record not found");
     }
 
     if (borrowing.userId !== userId && userRole !== Role.ADMIN) {
-      throw new ForbiddenException('You do not have permission to view this borrowing');
+      throw new ForbiddenException(
+        "You do not have permission to view this borrowing",
+      );
     }
 
     return borrowing;
@@ -199,13 +222,13 @@ export class BorrowingsService {
         book: { select: { id: true, title: true, author: true } },
         user: { select: { id: true, name: true, email: true } },
       },
-      orderBy: { dueDate: 'asc' },
+      orderBy: { dueDate: "asc" },
     });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleDailyOverdueCheck() {
-    this.logger.log('Running daily overdue check...');
+    this.logger.log("Running daily overdue check...");
     const result = await this.markOverdueBorrowings();
     this.logger.log(result.message);
   }

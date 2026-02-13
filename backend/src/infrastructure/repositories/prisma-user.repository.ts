@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { User, UserProps } from '../../domain/entities/user.entity';
-import { IUserRepository } from '../../domain/repositories/user.repository.interface';
-import { Role } from '@prisma/client';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { User, UserProps } from "../../domain/entities/user.entity";
+import { IUserRepository } from "../../domain/repositories/user.repository.interface";
+import { Role } from "@prisma/client";
 
 @Injectable()
 export class PrismaUserRepository implements IUserRepository {
@@ -35,22 +35,31 @@ export class PrismaUserRepository implements IUserRepository {
     return user ? this.toEntity(user) : null;
   }
 
-  async findAll(options?: { role?: string; isActive?: boolean; limit?: number; offset?: number }): Promise<{ users: User[]; total: number }> {
+  async findAll(options?: {
+    role?: string;
+    isActive?: boolean;
+    studentId?: string;
+    teacherId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: User[]; total: number }> {
     const where: any = {};
     if (options?.role) where.role = options.role;
     if (options?.isActive !== undefined) where.isActive = options.isActive;
+    if (options?.studentId) where.studentId = options.studentId;
+    if (options?.teacherId) where.teacherId = options.teacherId;
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         take: options?.limit || 20,
         skip: options?.offset || 0,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.user.count({ where }),
     ]);
 
-    return { users: users.map(u => this.toEntity(u)), total };
+    return { users: users.map((u) => this.toEntity(u)), total };
   }
 
   async save(user: User): Promise<User> {

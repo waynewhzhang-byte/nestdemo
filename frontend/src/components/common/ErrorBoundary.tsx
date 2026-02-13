@@ -50,10 +50,10 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-serif)' }}>
-                Something went wrong
+                出错了
               </h1>
               <p className="text-muted-foreground">
-                We're sorry, but something unexpected happened. Please try again.
+                抱歉，发生了一些意外。请稍后再试。
               </p>
             </div>
             {import.meta.env.DEV && this.state.error && (
@@ -63,11 +63,11 @@ export class ErrorBoundary extends Component<Props, State> {
             )}
             <div className="flex justify-center gap-4">
               <Button variant="outline" onClick={this.handleReset}>
-                Try Again
+                重试
               </Button>
               <Button onClick={this.handleReload}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Reload Page
+                重新加载页面
               </Button>
             </div>
           </div>

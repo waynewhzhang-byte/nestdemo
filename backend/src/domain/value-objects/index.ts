@@ -6,9 +6,9 @@ export class ISBN {
   }
 
   static create(value: string): ISBN {
-    const cleaned = value.replace(/[-\s]/g, '');
+    const cleaned = value.replace(/[-\s]/g, "");
     if (!/^\d{10,13}$/.test(cleaned)) {
-      throw new Error('Invalid ISBN format');
+      throw new Error("Invalid ISBN format");
     }
     return new ISBN(cleaned);
   }
@@ -26,36 +26,36 @@ export class Money {
   private readonly amount: number;
   private readonly currency: string;
 
-  private constructor(amount: number, currency: string = 'USD') {
+  private constructor(amount: number, currency: string = "USD") {
     this.amount = Math.round(amount * 100) / 100;
     this.currency = currency;
   }
 
-  static create(amount: number, currency: string = 'USD'): Money {
+  static create(amount: number, currency: string = "USD"): Money {
     if (amount < 0) {
-      throw new Error('Amount cannot be negative');
+      throw new Error("Amount cannot be negative");
     }
     return new Money(amount, currency);
   }
 
-  static zero(currency: string = 'USD'): Money {
+  static zero(currency: string = "USD"): Money {
     return new Money(0, currency);
   }
 
   add(other: Money): Money {
     if (this.currency !== other.currency) {
-      throw new Error('Cannot add different currencies');
+      throw new Error("Cannot add different currencies");
     }
     return new Money(this.amount + other.amount, this.currency);
   }
 
   subtract(other: Money): Money {
     if (this.currency !== other.currency) {
-      throw new Error('Cannot subtract different currencies');
+      throw new Error("Cannot subtract different currencies");
     }
     const result = this.amount - other.amount;
     if (result < 0) {
-      throw new Error('Result cannot be negative');
+      throw new Error("Result cannot be negative");
     }
     return new Money(result, this.currency);
   }
@@ -117,7 +117,9 @@ export class DueDate {
 
   daysUntilDue(): number {
     const now = new Date();
-    return Math.ceil((this.value.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil(
+      (this.value.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
   }
 
   addDays(days: number): DueDate {

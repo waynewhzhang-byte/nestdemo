@@ -1,16 +1,23 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsEnum } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  Min,
+  IsEnum,
+} from "class-validator";
 
 export enum ReservationStatus {
-  PENDING = 'PENDING',
-  READY = 'READY',
-  CANCELLED = 'CANCELLED',
-  FULFILLED = 'FULFILLED',
-  EXPIRED = 'EXPIRED',
+  PENDING = "PENDING",
+  READY = "READY",
+  CANCELLED = "CANCELLED",
+  FULFILLED = "FULFILLED",
+  EXPIRED = "EXPIRED",
 }
 
 export class CreateReservationDto {
-  @ApiProperty({ description: 'Book ID to reserve' })
+  @ApiProperty({ description: "Book ID to reserve" })
   @IsString()
   @IsNotEmpty()
   bookId: string;
@@ -34,7 +41,7 @@ export class QueryReservationsDto {
   @IsEnum(ReservationStatus)
   status?: ReservationStatus;
 
-  @ApiPropertyOptional({ description: 'Filter by book ID' })
+  @ApiPropertyOptional({ description: "Filter by book ID" })
   @IsOptional()
   @IsString()
   bookId?: string;

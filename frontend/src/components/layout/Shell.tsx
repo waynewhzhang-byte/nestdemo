@@ -2,53 +2,66 @@ import * as React from 'react';
 import { Sidebar } from './Sidebar';
 import { Menu, LibraryBig } from 'lucide-react';
 import { Button } from '../ui/button';
-
-type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ShellProps {
   children: React.ReactNode;
-  userRole?: UserRole;
-  userName?: string;
 }
 
-export function Shell({ children, userRole = 'STUDENT', userName = 'John Doe' }: ShellProps) {
-  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+export function Shell({ children }: ShellProps) {
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { user } = useAuth();
 
   return (
-    <div className="flex min-h-screen bg-secondary/20">
-      <aside className="hidden w-64 flex-col md:flex fixed inset-y-0 z-50">
-        <Sidebar className="h-full" role={userRole} userName={userName} />
+    <div className="flex min-h-screen bg-background">
+      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:z-30">
+        <Sidebar
+          role={user?.role}
+          userName={user?.name ?? ''}
+        />
       </aside>
 
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="fixed inset-0 bg-black/80" onClick={() => setIsMobileOpen(false)} />
-          <div className="relative flex w-64 flex-col bg-background">
-            <Sidebar className="h-full border-r-0" role={userRole} userName={userName} />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-2 top-2" 
-              onClick={() => setIsMobileOpen(false)}
-            >
-              <span className="sr-only">Close</span>
-            </Button>
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/20 md:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden
+          />
+          <div className="fixed inset-y-0 left-0 z-50 w-56 md:hidden">
+            <Sidebar
+              role={user?.role}
+              userName={user?.name ?? ''}
+            />
           </div>
-        </div>
+        </>
       )}
 
-      <main className="flex-1 md:pl-64">
-        <div className="flex h-16 items-center border-b bg-background px-4 md:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
+      <main className="flex-1 min-w-0 md:pl-56">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-card px-4 md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setMobileOpen(true)}
+            aria-label="打开菜单"
+          >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="ml-2 flex items-center gap-2">
-            <LibraryBig className="h-5 w-5 text-primary" />
-            <span className="font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>Library System</span>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+              <LibraryBig className="h-4 w-4" />
+            </div>
+            <span
+              className="font-semibold text-foreground"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              图书馆
+            </span>
           </div>
-        </div>
-        <div className="p-4 md:p-8 animate-in fade-in duration-500">
-            {children}
+        </header>
+        <div className="p-4 md:p-6 lg:p-8">
+          {children}
         </div>
       </main>
     </div>

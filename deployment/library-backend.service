@@ -1,0 +1,24 @@
+[Unit]
+Description=Library Management System API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/library-backend
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/library-backend/.env
+ExecStart=/usr/bin/node /var/www/library-backend/dist/main.js
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/library-backend/dist
+
+[Install]
+WantedBy=multi-user.target

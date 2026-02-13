@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { StatisticsQueryDto, TimeRange } from './dto/statistics.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { StatisticsQueryDto, TimeRange } from "./dto/statistics.dto";
 
 @Injectable()
 export class StatisticsService {
   constructor(private prisma: PrismaService) {}
 
-  private getDateRange(timeRange?: TimeRange, startDate?: string, endDate?: string) {
+  private getDateRange(
+    timeRange?: TimeRange,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const now = new Date();
     let start: Date;
     let end = new Date(now);
@@ -37,7 +41,11 @@ export class StatisticsService {
   }
 
   async getDashboardOverview(query: StatisticsQueryDto) {
-    const { start, end } = this.getDateRange(query.timeRange, query.startDate, query.endDate);
+    const { start, end } = this.getDateRange(
+      query.timeRange,
+      query.startDate,
+      query.endDate,
+    );
 
     const [
       totalBooks,
@@ -55,11 +63,13 @@ export class StatisticsService {
       this.prisma.book.aggregate({ _sum: { totalCopies: true } }),
       this.prisma.book.aggregate({ _sum: { availableCopies: true } }),
       this.prisma.user.count({ where: { isActive: true } }),
-      this.prisma.borrowing.count({ where: { status: 'ACTIVE' } }),
-      this.prisma.borrowing.count({ where: { status: 'OVERDUE' } }),
-      this.prisma.reservation.count({ where: { status: { in: ['PENDING', 'READY'] } } }),
+      this.prisma.borrowing.count({ where: { status: "ACTIVE" } }),
+      this.prisma.borrowing.count({ where: { status: "OVERDUE" } }),
+      this.prisma.reservation.count({
+        where: { status: { in: ["PENDING", "READY"] } },
+      }),
       this.prisma.fine.aggregate({
-        where: { status: { in: ['UNPAID', 'PARTIAL'] } },
+        where: { status: { in: ["UNPAID", "PARTIAL"] } },
         _sum: { amount: true },
       }),
       this.prisma.borrowing.count({
@@ -75,7 +85,9 @@ export class StatisticsService {
         total: totalBooks,
         totalCopies: totalCopies._sum.totalCopies || 0,
         availableCopies: availableCopies._sum.availableCopies || 0,
-        borrowedCopies: (totalCopies._sum.totalCopies || 0) - (availableCopies._sum.availableCopies || 0),
+        borrowedCopies:
+          (totalCopies._sum.totalCopies || 0) -
+          (availableCopies._sum.availableCopies || 0),
       },
       users: {
         total: totalUsers,
@@ -100,33 +112,43 @@ export class StatisticsService {
   }
 
   async getBorrowingStatistics(query: StatisticsQueryDto) {
-    const { start, end } = this.getDateRange(query.timeRange, query.startDate, query.endDate);
+    const { start, end } = this.getDateRange(
+      query.timeRange,
+      query.startDate,
+      query.endDate,
+    );
 
-    const [byStatus, dailyBorrowings, dailyReturns, topBorrowedBooks, topBorrowers] = await Promise.all([
+    const [
+      byStatus,
+      dailyBorrowings,
+      dailyReturns,
+      topBorrowedBooks,
+      topBorrowers,
+    ] = await Promise.all([
       this.prisma.borrowing.groupBy({
-        by: ['status'],
+        by: ["status"],
         _count: { id: true },
       }),
       this.prisma.borrowing.groupBy({
-        by: ['borrowedAt'],
+        by: ["borrowedAt"],
         where: { borrowedAt: { gte: start, lte: end } },
         _count: { id: true },
       }),
       this.prisma.borrowing.groupBy({
-        by: ['returnedAt'],
+        by: ["returnedAt"],
         where: { returnedAt: { gte: start, lte: end } },
         _count: { id: true },
       }),
       this.prisma.borrowing.groupBy({
-        by: ['bookId'],
+        by: ["bookId"],
         _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
+        orderBy: { _count: { id: "desc" } },
         take: 10,
       }),
       this.prisma.borrowing.groupBy({
-        by: ['userId'],
+        by: ["userId"],
         _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
+        orderBy: { _count: { id: "desc" } },
         take: 10,
       }),
     ]);
@@ -152,10 +174,13 @@ export class StatisticsService {
     );
 
     return {
-      byStatus: byStatus.reduce((acc, item) => {
-        acc[item.status] = item._count.id;
-        return acc;
-      }, {} as Record<string, number>),
+      byStatus: byStatus.reduce(
+        (acc, item) => {
+          acc[item.status] = item._count.id;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
       dailyBorrowings: dailyBorrowings.map((item) => ({
         date: item.borrowedAt,
         count: item._count.id,
@@ -176,36 +201,42 @@ export class StatisticsService {
   async getBookStatistics(query: StatisticsQueryDto) {
     const [byStatus, byCategory, lowStock, recentlyAdded] = await Promise.all([
       this.prisma.book.groupBy({
-        by: ['status'],
+        by: ["status"],
         _count: { id: true },
       }),
       this.prisma.book.groupBy({
-        by: ['category'],
+        by: ["category"],
         _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
+        orderBy: { _count: { id: "desc" } },
       }),
       this.prisma.book.findMany({
         where: {
-          OR: [
-            { availableCopies: { lte: 2 } },
-            { totalCopies: { lte: 2 } },
-          ],
+          OR: [{ availableCopies: { lte: 2 } }, { totalCopies: { lte: 2 } }],
         },
-        select: { id: true, title: true, author: true, availableCopies: true, totalCopies: true },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          availableCopies: true,
+          totalCopies: true,
+        },
         take: 20,
       }),
       this.prisma.book.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         select: { id: true, title: true, author: true, createdAt: true },
         take: 10,
       }),
     ]);
 
     return {
-      byStatus: byStatus.reduce((acc, item) => {
-        acc[item.status] = item._count.id;
-        return acc;
-      }, {} as Record<string, number>),
+      byStatus: byStatus.reduce(
+        (acc, item) => {
+          acc[item.status] = item._count.id;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
       byCategory: byCategory.map((item) => ({
         category: item.category,
         count: item._count.id,
@@ -216,24 +247,28 @@ export class StatisticsService {
   }
 
   async getUserStatistics(query: StatisticsQueryDto) {
-    const { start, end } = this.getDateRange(query.timeRange, query.startDate, query.endDate);
+    const { start, end } = this.getDateRange(
+      query.timeRange,
+      query.startDate,
+      query.endDate,
+    );
 
     const [byRole, byStatus, newUsers, mostActiveUsers] = await Promise.all([
       this.prisma.user.groupBy({
-        by: ['role'],
+        by: ["role"],
         _count: { id: true },
       }),
       this.prisma.user.groupBy({
-        by: ['isActive'],
+        by: ["isActive"],
         _count: { id: true },
       }),
       this.prisma.user.count({
         where: { createdAt: { gte: start, lte: end } },
       }),
       this.prisma.borrowing.groupBy({
-        by: ['userId'],
+        by: ["userId"],
         _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
+        orderBy: { _count: { id: "desc" } },
         take: 10,
       }),
     ]);
@@ -249,10 +284,13 @@ export class StatisticsService {
     );
 
     return {
-      byRole: byRole.reduce((acc, item) => {
-        acc[item.role] = item._count.id;
-        return acc;
-      }, {} as Record<string, number>),
+      byRole: byRole.reduce(
+        (acc, item) => {
+          acc[item.role] = item._count.id;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
       byStatus: {
         active: byStatus.find((s) => s.isActive === true)?._count.id || 0,
         inactive: byStatus.find((s) => s.isActive === false)?._count.id || 0,
@@ -267,30 +305,35 @@ export class StatisticsService {
   }
 
   async getFineStatistics(query: StatisticsQueryDto) {
-    const { start, end } = this.getDateRange(query.timeRange, query.startDate, query.endDate);
+    const { start, end } = this.getDateRange(
+      query.timeRange,
+      query.startDate,
+      query.endDate,
+    );
 
-    const [byStatus, totalFines, collectedFines, topDebtors] = await Promise.all([
-      this.prisma.fine.groupBy({
-        by: ['status'],
-        _count: { id: true },
-        _sum: { amount: true },
-      }),
-      this.prisma.fine.aggregate({
-        _sum: { amount: true },
-        _count: { id: true },
-      }),
-      this.prisma.fine.aggregate({
-        where: { status: 'PAID' },
-        _sum: { amount: true },
-      }),
-      this.prisma.fine.groupBy({
-        by: ['userId'],
-        where: { status: { in: ['UNPAID', 'PARTIAL'] } },
-        _sum: { amount: true },
-        orderBy: { _sum: { amount: 'desc' } },
-        take: 10,
-      }),
-    ]);
+    const [byStatus, totalFines, collectedFines, topDebtors] =
+      await Promise.all([
+        this.prisma.fine.groupBy({
+          by: ["status"],
+          _count: { id: true },
+          _sum: { amount: true },
+        }),
+        this.prisma.fine.aggregate({
+          _sum: { amount: true },
+          _count: { id: true },
+        }),
+        this.prisma.fine.aggregate({
+          where: { status: "PAID" },
+          _sum: { amount: true },
+        }),
+        this.prisma.fine.groupBy({
+          by: ["userId"],
+          where: { status: { in: ["UNPAID", "PARTIAL"] } },
+          _sum: { amount: true },
+          orderBy: { _sum: { amount: "desc" } },
+          take: 10,
+        }),
+      ]);
 
     const topDebtorsWithDetails = await Promise.all(
       topDebtors.map(async (item) => {
@@ -303,18 +346,23 @@ export class StatisticsService {
     );
 
     return {
-      byStatus: byStatus.reduce((acc, item) => {
-        acc[item.status] = {
-          count: item._count.id,
-          amount: Number(item._sum.amount || 0),
-        };
-        return acc;
-      }, {} as Record<string, { count: number; amount: number }>),
+      byStatus: byStatus.reduce(
+        (acc, item) => {
+          acc[item.status] = {
+            count: item._count.id,
+            amount: Number(item._sum.amount || 0),
+          };
+          return acc;
+        },
+        {} as Record<string, { count: number; amount: number }>,
+      ),
       summary: {
         totalFines: totalFines._count.id,
         totalAmount: Number(totalFines._sum.amount || 0),
         collectedAmount: Number(collectedFines._sum.amount || 0),
-        outstandingAmount: Number((totalFines._sum.amount || 0)) - Number((collectedFines._sum.amount || 0)),
+        outstandingAmount:
+          Number(totalFines._sum.amount || 0) -
+          Number(collectedFines._sum.amount || 0),
       },
       topDebtors: topDebtorsWithDetails,
       period: {

@@ -65,14 +65,6 @@ export default function Borrowings() {
     queryFn: () => borrowingsApi.getMy(),
   });
 
-  if (isLoading && !borrowingsData) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Loading />
-      </div>
-    );
-  }
-
   const renewMutation = useMutation({
     mutationFn: (borrowingId: string) => borrowingsApi.renew(borrowingId),
     onSuccess: () => {
@@ -88,6 +80,14 @@ export default function Borrowings() {
       queryClient.invalidateQueries({ queryKey: ['borrowings'] });
     },
   });
+
+  if (isLoading && !borrowingsData) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
 
   const borrowings: Borrowing[] = borrowingsData?.borrowings || [];
   
@@ -124,29 +124,29 @@ export default function Borrowings() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-            My Borrowings
+            我的借阅
           </h2>
           <p className="text-muted-foreground">
-            Manage your borrowed books and view history
+            管理您的借阅图书并查看历史记录
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          title="Active Borrowings"
+          title="当前借阅"
           value={stats.active}
           icon={BookOpen}
           variant="default"
         />
         <StatCard
-          title="Overdue"
+          title="已逾期"
           value={stats.overdue}
           icon={AlertCircle}
           variant={stats.overdue > 0 ? "destructive" : "success"}
         />
         <StatCard
-          title="Outstanding Fines"
+          title="待缴罚金"
           value={`$${stats.totalFines.toFixed(2)}`}
           icon={Clock}
           variant={stats.totalFines > 0 ? "warning" : "success"}
@@ -157,7 +157,7 @@ export default function Borrowings() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by title or author..."
+            placeholder="搜索书名或作者..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -165,12 +165,12 @@ export default function Borrowings() {
         </div>
         <Select defaultValue="all">
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="按状态筛选" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Books</SelectItem>
-            <SelectItem value="due-soon">Due Soon</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
+            <SelectItem value="all">全部图书</SelectItem>
+            <SelectItem value="due-soon">即将到期</SelectItem>
+            <SelectItem value="overdue">已逾期</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -178,13 +178,13 @@ export default function Borrowings() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="current">
-            Current ({currentBorrows.length})
+            当前 ({currentBorrows.length})
           </TabsTrigger>
           <TabsTrigger value="overdue">
-            Overdue ({overdueBorrows.length})
+            已逾期 ({overdueBorrows.length})
           </TabsTrigger>
           <TabsTrigger value="history">
-            History ({historyBorrows.length})
+            历史记录 ({historyBorrows.length})
           </TabsTrigger>
         </TabsList>
 
@@ -194,8 +194,8 @@ export default function Borrowings() {
               {filteredBorrowings(currentBorrows).length === 0 ? (
                 <EmptyState
                   icon={BookMarked}
-                  title="No active borrowings"
-                  description="You don't have any books checked out. Visit the catalog to find your next read!"
+                  title="暂无借阅中的图书"
+                  description="您目前没有借阅任何图书。去图书库看看吧！"
                 />
               ) : (
                 <div className="divide-y">
@@ -217,11 +217,11 @@ export default function Borrowings() {
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant={isDueSoon ? "warning" : "outline"} className="text-xs">
                                 <Calendar className="h-3 w-3 mr-1" />
-                                Due {borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : ''}
+                                应还日期 {borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : ''}
                               </Badge>
                               {isDueSoon && (
                                 <span className="text-xs text-warning font-medium">
-                                  {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                                  还剩 {daysLeft} 天到期
                                 </span>
                               )}
                             </div>
@@ -236,7 +236,7 @@ export default function Borrowings() {
                               disabled={renewMutation.isPending}
                             >
                               <RotateCcw className="h-4 w-4 mr-1" />
-                              Renew ({borrowing.maxRenewals - borrowing.renewedCount})
+                              续借 ({borrowing.maxRenewals - borrowing.renewedCount})
                             </Button>
                           )}
                           <Button 
@@ -246,7 +246,7 @@ export default function Borrowings() {
                             disabled={returnMutation.isPending}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Return
+                            归还
                           </Button>
                         </div>
                       </div>
@@ -264,8 +264,8 @@ export default function Borrowings() {
               {filteredBorrowings(overdueBorrows).length === 0 ? (
                 <EmptyState
                   icon={CheckCircle}
-                  title="No overdue books"
-                  description="Great job! You don't have any overdue books."
+                  title="暂无逾期图书"
+                  description="太棒了！您没有任何逾期图书。"
                 />
               ) : (
                 <div className="divide-y">
@@ -282,7 +282,7 @@ export default function Borrowings() {
                           <p className="text-sm text-muted-foreground">{borrowing.book?.author}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="destructive" className="text-xs">
-                              Was due {borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : ''}
+                              原定还书日期 {borrowing.dueDate ? new Date(borrowing.dueDate).toLocaleDateString() : ''}
                             </Badge>
                           </div>
                         </div>
@@ -295,7 +295,7 @@ export default function Borrowings() {
                           disabled={returnMutation.isPending}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Return Now
+                          立即归还
                         </Button>
                       </div>
                     </div>
@@ -312,8 +312,8 @@ export default function Borrowings() {
               {filteredBorrowings(historyBorrows).length === 0 ? (
                 <EmptyState
                   icon={BookOpen}
-                  title="No borrowing history"
-                  description="Your returned books will appear here."
+                  title="暂无借阅历史"
+                  description="您归还的图书将显示在这里。"
                 />
               ) : (
                 <div className="divide-y">
@@ -328,10 +328,10 @@ export default function Borrowings() {
                         </p>
                         <p className="text-sm text-muted-foreground">{borrowing.book?.author}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Borrowed: {borrowing.borrowedAt ? new Date(borrowing.borrowedAt).toLocaleDateString() : ''} • Returned: {borrowing.returnedAt ? new Date(borrowing.returnedAt).toLocaleDateString() : '-'}
+                          借阅日期: {borrowing.borrowedAt ? new Date(borrowing.borrowedAt).toLocaleDateString() : ''} • 归还日期: {borrowing.returnedAt ? new Date(borrowing.returnedAt).toLocaleDateString() : '-'}
                         </p>
                       </div>
-                      <Badge variant="secondary">Returned</Badge>
+                      <Badge variant="secondary">已归还</Badge>
                     </div>
                   ))}
                 </div>
@@ -344,33 +344,33 @@ export default function Borrowings() {
       <Dialog open={renewDialogOpen} onOpenChange={setRenewDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Renew Book</DialogTitle>
+            <DialogTitle>续借图书</DialogTitle>
             <DialogDescription>
-              Are you sure you want to renew "{selectedBorrowing?.book?.title}"?
+              您确定要续借 "{selectedBorrowing?.book?.title}" 吗？
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             {selectedBorrowing && (
               <div className="space-y-2 text-sm">
-                <p><span className="text-muted-foreground">Current due date:</span> {selectedBorrowing.dueDate ? new Date(selectedBorrowing.dueDate).toLocaleDateString() : ''}</p>
-                <p><span className="text-muted-foreground">New due date:</span> {
+                <p><span className="text-muted-foreground">当前应还日期：</span> {selectedBorrowing.dueDate ? new Date(selectedBorrowing.dueDate).toLocaleDateString() : ''}</p>
+                <p><span className="text-muted-foreground">新应还日期：</span> {
                   selectedBorrowing.dueDate
                     ? new Date(new Date(selectedBorrowing.dueDate).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()
                     : ''
                 }</p>
-                <p><span className="text-muted-foreground">Renewals remaining after this:</span> {selectedBorrowing.maxRenewals - selectedBorrowing.renewedCount - 1}</p>
+                <p><span className="text-muted-foreground">续借剩余次数：</span> {selectedBorrowing.maxRenewals - selectedBorrowing.renewedCount - 1}</p>
               </div>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenewDialogOpen(false)}>
-              Cancel
+              取消
             </Button>
             <Button 
               onClick={() => selectedBorrowing && renewMutation.mutate(selectedBorrowing.id)}
               disabled={renewMutation.isPending}
             >
-              Confirm Renewal
+              确认续借
             </Button>
           </DialogFooter>
         </DialogContent>

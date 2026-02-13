@@ -95,14 +95,14 @@ export default function UsersPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: { role?: string; isActive?: boolean } }) =>
       usersApi.update(id, data),
-    onSuccess: () => {
+      onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setEditDialogOpen(false);
       setSelectedUser(null);
-      success('Success', 'User updated.');
+      success('成功', '用户信息已更新。');
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
-      toastError('Update failed', err.response?.data?.message || 'Could not update user.');
+      toastError('更新失败', err.response?.data?.message || '无法更新用户信息。');
     },
   });
 
@@ -112,10 +112,10 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setEditDialogOpen(false);
       setSelectedUser(null);
-      success('Success', 'User deactivated.');
+      success('成功', '用户已禁用。');
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
-      toastError('Deactivate failed', err.response?.data?.message || 'Could not deactivate user.');
+      toastError('禁用失败', err.response?.data?.message || '无法禁用用户。');
     },
   });
 
@@ -138,21 +138,21 @@ export default function UsersPage() {
         return (
           <Badge variant="destructive">
             <Shield className="h-3 w-3 mr-1" />
-            Admin
+            管理员
           </Badge>
         );
       case 'TEACHER':
         return (
           <Badge variant="secondary">
             <GraduationCap className="h-3 w-3 mr-1" />
-            Teacher
+            教师
           </Badge>
         );
       case 'STUDENT':
         return (
           <Badge variant="outline">
             <BookOpen className="h-3 w-3 mr-1" />
-            Student
+            学生
           </Badge>
         );
     }
@@ -179,7 +179,7 @@ export default function UsersPage() {
   };
 
   const handleDeactivate = (user: User) => {
-    if (window.confirm(`Deactivate ${user.name}? They will not be able to log in.`)) {
+    if (window.confirm(`确定要禁用用户 ${user.name} 吗？禁用后该用户将无法登录。`)) {
       removeMutation.mutate(user.id);
     }
   };
@@ -205,22 +205,22 @@ export default function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-            User Management
+            用户管理
           </h2>
-          <p className="text-muted-foreground">Manage library users, roles, and permissions</p>
+          <p className="text-muted-foreground">管理图书馆用户、角色和权限</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
-          Add User
+          添加用户
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Users" value={pagination?.total ?? 0} icon={Users} />
-        <StatCard title="Active Users" value={stats.active} icon={Users} variant="success" />
-        <StatCard title="Users with Fines" value={stats.withFines} icon={DollarSign} variant="warning" />
+        <StatCard title="总用户数" value={pagination?.total ?? 0} icon={Users} />
+        <StatCard title="活跃用户" value={stats.active} icon={Users} variant="success" />
+        <StatCard title="欠费用户" value={stats.withFines} icon={DollarSign} variant="warning" />
         <StatCard
-          title="Total Outstanding"
+          title="总欠费"
           value={`$${stats.totalFines.toFixed(2)}`}
           icon={DollarSign}
           variant={stats.totalFines > 0 ? 'destructive' : 'success'}
@@ -235,7 +235,7 @@ export default function UsersPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.students}</p>
-              <p className="text-sm text-muted-foreground">Students (this page)</p>
+              <p className="text-sm text-muted-foreground">学生（当前页）</p>
             </div>
           </div>
         </Card>
@@ -246,7 +246,7 @@ export default function UsersPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.teachers}</p>
-              <p className="text-sm text-muted-foreground">Teachers (this page)</p>
+              <p className="text-sm text-muted-foreground">教师（当前页）</p>
             </div>
           </div>
         </Card>
@@ -257,7 +257,7 @@ export default function UsersPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.admins}</p>
-              <p className="text-sm text-muted-foreground">Admins (this page)</p>
+              <p className="text-sm text-muted-foreground">管理员（当前页）</p>
             </div>
           </div>
         </Card>
@@ -269,7 +269,7 @@ export default function UsersPage() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                placeholder="搜索姓名或邮箱..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -277,13 +277,13 @@ export default function UsersPage() {
             </div>
             <Select value={roleFilter} onValueChange={(v) => { setRoleFilter(v); setPage(1); }}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by role" />
+                <SelectValue placeholder="按角色筛选" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="STUDENT">Students</SelectItem>
-                <SelectItem value="TEACHER">Teachers</SelectItem>
-                <SelectItem value="ADMIN">Admins</SelectItem>
+                <SelectItem value="all">所有角色</SelectItem>
+                <SelectItem value="STUDENT">学生</SelectItem>
+                <SelectItem value="TEACHER">教师</SelectItem>
+                <SelectItem value="ADMIN">管理员</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -292,19 +292,19 @@ export default function UsersPage() {
           {users.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="No users found"
-              description="Try adjusting your search or filter criteria."
+              title="未找到用户"
+              description="请尝试调整您的搜索或筛选条件。"
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Borrowings</TableHead>
-                  <TableHead className="text-right">Fines</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>用户</TableHead>
+                  <TableHead>角色</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead className="text-center">借阅数</TableHead>
+                  <TableHead className="text-right">罚金</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -324,9 +324,9 @@ export default function UsersPage() {
                     <TableCell>{getRoleBadge(user.role)}</TableCell>
                     <TableCell>
                       {user.isActive ? (
-                        <Badge variant="success">Active</Badge>
+                        <Badge variant="success">激活</Badge>
                       ) : (
-                        <Badge variant="warning">Inactive</Badge>
+                        <Badge variant="warning">禁用</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-center">
@@ -347,11 +347,11 @@ export default function UsersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>操作</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEdit(user)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit User
+                            编辑用户
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -360,7 +360,7 @@ export default function UsersPage() {
                             disabled={!user.isActive}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Deactivate User
+                            禁用用户
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -373,11 +373,11 @@ export default function UsersPage() {
           {pagination && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">
-                Page {pagination.page} of {pagination.totalPages} ({pagination.total} users)
+                第 {pagination.page} 页，共 {pagination.totalPages} 页（{pagination.total} 名用户）
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                  Previous
+                  上一页
                 </Button>
                 <Button
                   variant="outline"
@@ -385,7 +385,7 @@ export default function UsersPage() {
                   disabled={page >= pagination.totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Next
+                  下一页
                 </Button>
               </div>
             </div>
@@ -433,8 +433,8 @@ function EditUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
-          <DialogDescription>Update user role and status</DialogDescription>
+          <DialogTitle>编辑用户</DialogTitle>
+          <DialogDescription>更新用户角色和状态</DialogDescription>
         </DialogHeader>
         {user && (
           <div className="space-y-4 py-4">
@@ -456,41 +456,41 @@ function EditUserDialog({
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
+              <label className="text-sm font-medium">角色</label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                  <SelectItem value="TEACHER">Teacher</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="STUDENT">学生</SelectItem>
+                  <SelectItem value="TEACHER">教师</SelectItem>
+                  <SelectItem value="ADMIN">管理员</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+              <label className="text-sm font-medium">状态</label>
               <Select value={isActive ? 'ACTIVE' : 'INACTIVE'} onValueChange={(v) => setIsActive(v === 'ACTIVE')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="ACTIVE">激活</SelectItem>
+                  <SelectItem value="INACTIVE">禁用</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
               <div>
-                <p className="text-muted-foreground">Member Since</p>
+                <p className="text-muted-foreground">注册时间</p>
                 <p className="font-medium">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Borrowings</p>
+                <p className="text-muted-foreground">借阅数</p>
                 <p className="font-medium">{user.borrowingsCount}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Outstanding Fines</p>
+                <p className="text-muted-foreground">待缴罚金</p>
                 <p className="font-medium text-destructive">${user.finesOwed.toFixed(2)}</p>
               </div>
             </div>
@@ -498,10 +498,10 @@ function EditUserDialog({
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            取消
           </Button>
           <Button onClick={() => onSave(role, isActive)} disabled={isLoading}>
-            Save Changes
+            保存更改
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -533,10 +533,10 @@ function CreateUserDialog({
       setPassword('');
       setName('');
       setRole('STUDENT');
-      success('Success', 'User created.');
+      success('成功', '用户已创建。');
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
-      toastError('Create failed', err.response?.data?.message || 'Could not create user.');
+      toastError('创建失败', err.response?.data?.message || '无法创建用户。');
     },
   });
 
@@ -544,45 +544,45 @@ function CreateUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add User</DialogTitle>
-          <DialogDescription>Create a new library user account</DialogDescription>
+          <DialogTitle>添加用户</DialogTitle>
+          <DialogDescription>创建一个新的图书馆用户账号</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
+            <label className="text-sm font-medium">电子邮箱</label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@school.edu" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" />
+            <label className="text-sm font-medium">密码</label>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 6 个字符" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" />
+            <label className="text-sm font-medium">姓名</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="全名" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Role</label>
+            <label className="text-sm font-medium">角色</label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="STUDENT">Student</SelectItem>
-                <SelectItem value="TEACHER">Teacher</SelectItem>
-                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="STUDENT">学生</SelectItem>
+                <SelectItem value="TEACHER">教师</SelectItem>
+                <SelectItem value="ADMIN">管理员</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            取消
           </Button>
           <Button
             onClick={() => createMutation.mutate()}
             disabled={!email || !password || !name || createMutation.isPending}
           >
-            Create User
+            创建用户
           </Button>
         </DialogFooter>
       </DialogContent>

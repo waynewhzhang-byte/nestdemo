@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role } from "@prisma/client";
 
 export interface UserProps {
   id: string;
@@ -21,14 +21,30 @@ export class User {
     this.props = props;
   }
 
-  get id(): string { return this.props.id; }
-  get email(): string { return this.props.email; }
-  get name(): string { return this.props.name; }
-  get role(): Role { return this.props.role; }
-  get studentId(): string | undefined { return this.props.studentId; }
-  get teacherId(): string | undefined { return this.props.teacherId; }
-  get isActive(): boolean { return this.props.isActive; }
-  get createdAt(): Date { return this.props.createdAt; }
+  get id(): string {
+    return this.props.id;
+  }
+  get email(): string {
+    return this.props.email;
+  }
+  get name(): string {
+    return this.props.name;
+  }
+  get role(): Role {
+    return this.props.role;
+  }
+  get studentId(): string | undefined {
+    return this.props.studentId;
+  }
+  get teacherId(): string | undefined {
+    return this.props.teacherId;
+  }
+  get isActive(): boolean {
+    return this.props.isActive;
+  }
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
 
   isStudent(): boolean {
     return this.props.role === Role.STUDENT;
@@ -44,6 +60,19 @@ export class User {
 
   canBorrow(): boolean {
     return this.props.isActive;
+  }
+
+  activate(): void {
+    this.props.isActive = true;
+  }
+
+  deactivate(): void {
+    this.props.isActive = false;
+  }
+
+  update(updates: { name?: string; phone?: string }): void {
+    if (updates.name !== undefined) this.props.name = updates.name;
+    if (updates.phone !== undefined) this.props.phone = updates.phone;
   }
 
   toJSON(): UserProps {

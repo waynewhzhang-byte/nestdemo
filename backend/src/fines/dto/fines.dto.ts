@@ -1,10 +1,18 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsEnum, IsPositive } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  Min,
+  IsEnum,
+  IsPositive,
+} from "class-validator";
 
 export enum FineStatus {
-  UNPAID = 'UNPAID',
-  PARTIAL = 'PARTIAL',
-  PAID = 'PAID',
+  UNPAID = "UNPAID",
+  PARTIAL = "PARTIAL",
+  PAID = "PAID",
 }
 
 export class QueryFinesDto {
@@ -25,36 +33,36 @@ export class QueryFinesDto {
   @IsEnum(FineStatus)
   status?: FineStatus;
 
-  @ApiPropertyOptional({ description: 'Filter by user ID' })
+  @ApiPropertyOptional({ description: "Filter by user ID" })
   @IsOptional()
   @IsString()
   userId?: string;
 }
 
 export class PayFineDto {
-  @ApiProperty({ description: 'Amount to pay', example: 5.00 })
+  @ApiProperty({ description: "Amount to pay", example: 5.0 })
   @IsNumber()
   @IsPositive()
   amount: number;
 }
 
 export class CreateFineDto {
-  @ApiProperty({ description: 'Borrowing ID associated with this fine' })
+  @ApiProperty({ description: "Borrowing ID associated with this fine" })
   @IsString()
   @IsNotEmpty()
   borrowingId: string;
 
-  @ApiProperty({ description: 'User ID' })
+  @ApiProperty({ description: "User ID" })
   @IsString()
   @IsNotEmpty()
   userId: string;
 
-  @ApiProperty({ description: 'Fine amount', example: 3.50 })
+  @ApiProperty({ description: "Fine amount", example: 3.5 })
   @IsNumber()
   @IsPositive()
   amount: number;
 
-  @ApiProperty({ description: 'Reason for the fine' })
+  @ApiProperty({ description: "Reason for the fine" })
   @IsString()
   @IsNotEmpty()
   reason: string;

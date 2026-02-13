@@ -1,11 +1,15 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma/prisma.service';
-import { RegisterDto, LoginDto, UserRole } from './dto/auth.dto';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
+import { PrismaService } from "../prisma/prisma.service";
+import { RegisterDto, LoginDto, UserRole } from "./dto/auth.dto";
 
-const ACCESS_TOKEN_EXPIRY = '15m';
-const REFRESH_TOKEN_EXPIRY = '7d';
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_EXPIRY = "7d";
 
 @Injectable()
 export class AuthService {
@@ -20,7 +24,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException("Email already registered");
     }
 
     if (registerDto.studentId) {
@@ -28,7 +32,7 @@ export class AuthService {
         where: { studentId: registerDto.studentId },
       });
       if (existingStudent) {
-        throw new ConflictException('Student ID already registered');
+        throw new ConflictException("Student ID already registered");
       }
     }
 
@@ -37,7 +41,7 @@ export class AuthService {
         where: { teacherId: registerDto.teacherId },
       });
       if (existingTeacher) {
-        throw new ConflictException('Teacher ID already registered');
+        throw new ConflictException("Teacher ID already registered");
       }
     }
 
@@ -62,15 +66,17 @@ export class AuthService {
   async refresh(refreshToken: string) {
     let payload: { sub: string; email: string; role: string };
     try {
-      payload = this.jwtService.verify(refreshToken, { ignoreExpiration: false });
+      payload = this.jwtService.verify(refreshToken, {
+        ignoreExpiration: false,
+      });
     } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException("Invalid or expired refresh token");
     }
     const user = await this.prismaService.user.findUnique({
       where: { id: payload.sub },
     });
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('User not found or inactive');
+      throw new UnauthorizedException("User not found or inactive");
     }
     const tokens = await this.generateTokens(user);
     return {
@@ -85,13 +91,16 @@ export class AuthService {
     });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const tokens = await this.generateTokens(user);
@@ -126,7 +135,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException("User not found");
     }
 
     return this.sanitizeUser(user);
@@ -141,19 +150,26 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException("User not found");
     }
 
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException("Current password is incorrect");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -163,24 +179,32 @@ export class AuthService {
       data: { password: hashedPassword },
     });
 
-    return { message: 'Password changed successfully' };
+    return { message: "Password changed successfully" };
   }
 
-  private async generateTokens(user: { id: string; email: string; role: string }) {
+  private async generateTokens(user: {
+    id: string;
+    email: string;
+    role: string;
+  }) {
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_EXPIRY });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: REFRESH_TOKEN_EXPIRY });
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: ACCESS_TOKEN_EXPIRY,
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
 
     return { accessToken, refreshToken };
   }
 
   private sanitizeUser(user: any) {
-    const { password, ...sanitizedUser } = user;
+    const { password: _password, ...sanitizedUser } = user;
     return sanitizedUser;
   }
 }

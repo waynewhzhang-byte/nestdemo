@@ -34,12 +34,12 @@ export default function Register() {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('两次输入的密码不一致');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('密码至少需要6个字符');
       return;
     }
 
@@ -55,7 +55,7 @@ export default function Register() {
       });
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : '注册失败');
     }
   };
 
@@ -69,10 +69,10 @@ export default function Register() {
             </div>
           </div>
           <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-serif)' }}>
-            Create Account
+            创建账号
           </CardTitle>
           <CardDescription>
-            Register for a library account
+            注册图书馆账号
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,7 +84,7 @@ export default function Register() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="role">I am a</Label>
+              <Label htmlFor="role">我是</Label>
               <Select
                 value={formData.role}
                 onValueChange={(value: 'STUDENT' | 'TEACHER') =>
@@ -95,17 +95,17 @@ export default function Register() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                  <SelectItem value="TEACHER">Teacher</SelectItem>
+                  <SelectItem value="STUDENT">学生</SelectItem>
+                  <SelectItem value="TEACHER">教师</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">姓名</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
+                placeholder="张三"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -113,7 +113,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">邮箱</Label>
               <Input
                 id="email"
                 type="email"
@@ -126,7 +126,7 @@ export default function Register() {
 
             {formData.role === 'STUDENT' && (
               <div className="space-y-2">
-                <Label htmlFor="studentId">Student ID</Label>
+                <Label htmlFor="studentId">学号</Label>
                 <Input
                   id="studentId"
                   placeholder="STU2024001"
@@ -139,7 +139,7 @@ export default function Register() {
 
             {formData.role === 'TEACHER' && (
               <div className="space-y-2">
-                <Label htmlFor="teacherId">Teacher ID</Label>
+                <Label htmlFor="teacherId">工号</Label>
                 <Input
                   id="teacherId"
                   placeholder="TCH2024001"
@@ -151,18 +151,18 @@ export default function Register() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (Optional)</Label>
+              <Label htmlFor="phone">电话（可选）</Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+1 (555) 123-4567"
+                placeholder="+86 123 4567 8901"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">密码</Label>
               <Input
                 id="password"
                 type="password"
@@ -174,7 +174,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">确认密码</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -189,18 +189,18 @@ export default function Register() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  注册中...
                 </>
               ) : (
-                'Create Account'
+                '注册'
               )}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
+            已有账号？{' '}
             <Link to="/login" className="text-primary hover:underline font-medium">
-              Sign in
+              立即登录
             </Link>
           </div>
         </CardContent>

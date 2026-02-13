@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { Borrowing, BorrowingProps } from '../../domain/entities/borrowing.entity';
-import { IBorrowingRepository } from '../../domain/repositories/borrowing.repository.interface';
-import { BorrowingStatus } from '@prisma/client';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import {
+  Borrowing,
+  BorrowingProps,
+} from "../../domain/entities/borrowing.entity";
+import { IBorrowingRepository } from "../../domain/repositories/borrowing.repository.interface";
+import { BorrowingStatus } from "@prisma/client";
 
 @Injectable()
 export class PrismaBorrowingRepository implements IBorrowingRepository {
@@ -30,7 +33,10 @@ export class PrismaBorrowingRepository implements IBorrowingRepository {
     return borrowing ? this.toEntity(borrowing) : null;
   }
 
-  async findByUserId(userId: string, options?: { status?: string; limit?: number; offset?: number }): Promise<{ borrowings: Borrowing[]; total: number }> {
+  async findByUserId(
+    userId: string,
+    options?: { status?: string; limit?: number; offset?: number },
+  ): Promise<{ borrowings: Borrowing[]; total: number }> {
     const where: any = { userId };
     if (options?.status) where.status = options.status;
 
@@ -39,25 +45,27 @@ export class PrismaBorrowingRepository implements IBorrowingRepository {
         where,
         take: options?.limit || 20,
         skip: options?.offset || 0,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: { book: true },
       }),
       this.prisma.borrowing.count({ where }),
     ]);
 
-    return { borrowings: borrowings.map(b => this.toEntity(b)), total };
+    return { borrowings: borrowings.map((b) => this.toEntity(b)), total };
   }
 
   async findByBookId(bookId: string): Promise<Borrowing[]> {
-    const borrowings = await this.prisma.borrowing.findMany({ where: { bookId } });
-    return borrowings.map(b => this.toEntity(b));
+    const borrowings = await this.prisma.borrowing.findMany({
+      where: { bookId },
+    });
+    return borrowings.map((b) => this.toEntity(b));
   }
 
   async findActiveByUserId(userId: string): Promise<Borrowing[]> {
     const borrowings = await this.prisma.borrowing.findMany({
       where: { userId, status: BorrowingStatus.ACTIVE },
     });
-    return borrowings.map(b => this.toEntity(b));
+    return borrowings.map((b) => this.toEntity(b));
   }
 
   async findActiveByBookId(bookId: string): Promise<Borrowing | null> {
@@ -71,7 +79,7 @@ export class PrismaBorrowingRepository implements IBorrowingRepository {
     const borrowings = await this.prisma.borrowing.findMany({
       where: { status: BorrowingStatus.ACTIVE, dueDate: { lt: new Date() } },
     });
-    return borrowings.map(b => this.toEntity(b));
+    return borrowings.map((b) => this.toEntity(b));
   }
 
   async save(borrowing: Borrowing): Promise<Borrowing> {

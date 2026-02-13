@@ -1,32 +1,38 @@
-import { IsEmail, IsString, MinLength, IsEnum, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsEnum,
+  IsOptional,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export enum UserRole {
-  STUDENT = 'STUDENT',
-  TEACHER = 'TEACHER',
-  ADMIN = 'ADMIN',
+  STUDENT = "STUDENT",
+  TEACHER = "TEACHER",
+  ADMIN = "ADMIN",
 }
 
 export class RegisterDto {
-  @ApiProperty({ example: 'student@school.edu' })
+  @ApiProperty({ example: "student@school.edu" })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'password123', minLength: 6 })
+  @ApiProperty({ example: "password123", minLength: 6 })
   @IsString()
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'John Doe' })
+  @ApiProperty({ example: "John Doe" })
   @IsString()
   name: string;
 
-  @ApiPropertyOptional({ example: '20230001' })
+  @ApiPropertyOptional({ example: "20230001" })
   @IsOptional()
   @IsString()
   studentId?: string;
 
-  @ApiPropertyOptional({ example: 'T2023001' })
+  @ApiPropertyOptional({ example: "T2023001" })
   @IsOptional()
   @IsString()
   teacherId?: string;
@@ -36,29 +42,29 @@ export class RegisterDto {
   @IsEnum(UserRole)
   role?: UserRole;
 
-  @ApiPropertyOptional({ example: '+1234567890' })
+  @ApiPropertyOptional({ example: "+1234567890" })
   @IsOptional()
   @IsString()
   phone?: string;
 }
 
 export class LoginDto {
-  @ApiProperty({ example: 'student@school.edu' })
+  @ApiProperty({ example: "student@school.edu" })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: "password123" })
   @IsString()
   password: string;
 }
 
 export class UpdateProfileDto {
-  @ApiPropertyOptional({ example: 'John Doe' })
+  @ApiPropertyOptional({ example: "John Doe" })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ example: '+1234567890' })
+  @ApiPropertyOptional({ example: "+1234567890" })
   @IsOptional()
   @IsString()
   phone?: string;
@@ -76,7 +82,7 @@ export class ChangePasswordDto {
 }
 
 export class RefreshTokenDto {
-  @ApiProperty({ description: 'JWT refresh token' })
+  @ApiProperty({ description: "JWT refresh token" })
   @IsString()
   refreshToken: string;
 }

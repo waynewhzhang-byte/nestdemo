@@ -40,36 +40,34 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'relative rounded-xl border p-6 transition-all duration-200',
-        'hover:shadow-md hover:-translate-y-0.5',
+        'rounded-lg border border-border bg-card p-5',
         variantStyles[variant],
         className
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1 min-w-0">
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-2xl font-semibold tracking-tight text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>
             {value}
           </p>
           {description && (
             <p className="text-xs text-muted-foreground">{description}</p>
           )}
           {trend && (
-            <div
+            <span
               className={cn(
-                'inline-flex items-center gap-1 text-xs font-medium',
+                'text-xs font-medium',
                 trend.isPositive ? 'text-success' : 'text-destructive'
               )}
             >
-              <span>{trend.isPositive ? '↑' : '↓'}</span>
-              <span>{Math.abs(trend.value)}%</span>
-            </div>
+              {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
+            </span>
           )}
         </div>
         {Icon && (
-          <div className={cn('rounded-lg p-3', iconStyles[variant])}>
-            <Icon className="h-5 w-5" />
+          <div className={cn('rounded-md p-2 shrink-0', iconStyles[variant])}>
+            <Icon className="h-4 w-4" />
           </div>
         )}
       </div>

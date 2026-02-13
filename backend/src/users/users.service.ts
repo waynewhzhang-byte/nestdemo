@@ -1,12 +1,17 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
-import { QueryUsersDto, CreateUserDto, UpdateUserDto } from './dto/users.dto';
+import {
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { UserDomainService } from "../domain/services/user.domain-service";
+import { QueryUsersDto, CreateUserDto, UpdateUserDto } from "./dto/users.dto";
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userDomainService: UserDomainService,
+  ) {}
 
   private sanitizeUser(user: { password?: string; [key: string]: unknown }) {
     const { password, ...rest } = user;
@@ -20,19 +25,19 @@ export class UsersService {
     const where: Record<string, unknown> = {};
     if (search?.trim()) {
       where.OR = [
-        { name: { contains: search.trim(), mode: 'insensitive' } },
-        { email: { contains: search.trim(), mode: 'insensitive' } },
+        { name: { contains: search.trim(), mode: "insensitive" } },
+        { email: { contains: search.trim(), mode: "insensitive" } },
       ];
     }
     if (role) where.role = role;
-    if (typeof isActive === 'boolean') where.isActive = isActive;
+    if (typeof isActive === "boolean") where.isActive = isActive;
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         select: {
           id: true,
           email: true,
@@ -52,14 +57,16 @@ export class UsersService {
 
     const userIds = users.map((u) => u.id);
     const finesAgg = await this.prisma.fine.groupBy({
-      by: ['userId'],
+      by: ["userId"],
       where: {
         userId: { in: userIds },
-        status: { in: ['UNPAID', 'PARTIAL'] },
+        status: { in: ["UNPAID", "PARTIAL"] },
       },
       _sum: { amount: true },
     });
-    const finesMap = new Map(finesAgg.map((f) => [f.userId, Number(f._sum.amount || 0)]));
+    const finesMap = new Map(
+      finesAgg.map((f) => [f.userId, Number(f._sum.amount || 0)]),
+    );
 
     const usersWithStats = users.map((u) => {
       const { _count, ...rest } = u;
@@ -93,9 +100,9 @@ export class UsersService {
         _count: { select: { borrowings: true } },
       },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
     const finesSum = await this.prisma.fine.aggregate({
-      where: { userId: id, status: { in: ['UNPAID', 'PARTIAL'] } },
+      where: { userId: id, status: { in: ["UNPAID", "PARTIAL"] } },
       _sum: { amount: true },
     });
     return {
@@ -106,54 +113,35 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already registered');
-    if (dto.studentId) {
-      const s = await this.prisma.user.findUnique({ where: { studentId: dto.studentId } });
-      if (s) throw new ConflictException('Student ID already registered');
-    }
-    if (dto.teacherId) {
-      const t = await this.prisma.user.findUnique({ where: { teacherId: dto.teacherId } });
-      if (t) throw new ConflictException('Teacher ID already registered');
-    }
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        password: hashedPassword,
-        name: dto.name,
-        role: dto.role as Role,
-        studentId: dto.studentId,
-        teacherId: dto.teacherId,
-        phone: dto.phone,
-      },
+    const result = await this.userDomainService.createUser({
+      email: dto.email,
+      password: dto.password,
+      name: dto.name,
+      role: dto.role as any,
+      studentId: dto.studentId,
+      teacherId: dto.teacherId,
+      phone: dto.phone,
     });
-    return this.sanitizeUser(user);
+
+    const { password, ...sanitized } = result.user.toJSON();
+    return sanitized;
   }
 
   async update(id: string, dto: UpdateUserDto) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.role !== undefined && { role: dto.role as Role }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-      },
+    const result = await this.userDomainService.updateUser({
+      id,
+      name: dto.name,
+      phone: dto.phone,
+      role: dto.role as any,
+      isActive: dto.isActive,
     });
-    return this.sanitizeUser(updated);
+
+    const { password, ...sanitized } = result.user.toJSON();
+    return sanitized;
   }
 
   async remove(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-    await this.prisma.user.update({
-      where: { id },
-      data: { isActive: false },
-    });
-    return { message: 'User deactivated successfully' };
+    await this.userDomainService.deactivateUser(id);
+    return { message: "User deactivated successfully" };
   }
 }

@@ -23,27 +23,25 @@ import { borrowingsApi, finesApi, statisticsApi } from '../services/api';
 export default function Dashboard() {
   const { user } = useAuth();
   const userRole = user?.role ?? 'STUDENT';
-  const userName = user?.name ?? 'Student';
+  const userName = user?.name ?? '学生';
   const isAdmin = userRole === 'ADMIN' || userRole === 'TEACHER';
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-            {isAdmin ? 'Admin Dashboard' : `Welcome back, ${userName}`}
-          </h2>
-          <p className="text-muted-foreground">
-            {isAdmin
-              ? "Here's an overview of your library system."
-              : "Here's your library overview."}
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>
+            {isAdmin ? '工作台' : `${userName}，你好`}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isAdmin ? '系统概览' : '借阅与预约概览'}
           </p>
         </div>
         {!isAdmin && (
-          <Button asChild>
+          <Button variant="outline" size="sm" asChild>
             <Link to="/books">
               <BookOpen className="mr-2 h-4 w-4" />
-              Browse Books
+              去借书
             </Link>
           </Button>
         )}
@@ -97,30 +95,30 @@ function UserDashboard() {
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Active Borrows"
+          title="当前借阅"
           value={activeBorrows.length}
-          description="Books currently borrowed"
+          description="正在借阅的图书"
           icon={BookOpen}
           variant="default"
         />
         <StatCard
-          title="Due Soon"
+          title="即将到期"
           value={dueSoon}
-          description="Due within 3 days"
+          description="3天内到期"
           icon={Clock}
           variant="warning"
         />
         <StatCard
-          title="Overdue"
+          title="已逾期"
           value={overdue}
-          description={overdue === 0 ? 'Great job!' : 'Needs attention'}
+          description={overdue === 0 ? '表现优秀！' : '需要关注'}
           icon={AlertCircle}
           variant={overdue > 0 ? 'destructive' : 'success'}
         />
         <StatCard
-          title="Outstanding Fines"
-          value={`$${totalFines.toFixed(2)}`}
-          description={totalFines === 0 ? 'No outstanding payments' : 'Please pay soon'}
+          title="待缴罚金"
+          value={`¥${totalFines.toFixed(2)}`}
+          description={totalFines === 0 ? '无待缴金额' : '请尽快缴纳'}
           icon={DollarSign}
           variant={totalFines > 0 ? 'destructive' : 'success'}
         />
@@ -131,12 +129,12 @@ function UserDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Current Readings</CardTitle>
-                <CardDescription>Books you are currently borrowing</CardDescription>
+                <CardTitle>正在阅读</CardTitle>
+                <CardDescription>您目前借阅的图书</CardDescription>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/borrowings">
-                  View All
+                  查看全部
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -146,10 +144,10 @@ function UserDashboard() {
             {currentReadings.length === 0 ? (
               <EmptyState
                 icon={BookOpen}
-                title="No active borrowings"
-                description="You don't have any books checked out. Browse our catalog to find your next read!"
+                title="暂无借阅"
+                description="您目前没有借阅任何图书。浏览馆藏寻找下一本好书！"
                 action={{
-                  label: 'Browse Books',
+                  label: '浏览图书',
                   onClick: () => (window.location.href = '/books'),
                 }}
               />
@@ -170,11 +168,11 @@ function UserDashboard() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden sm:block">
-                        <p className="text-xs text-muted-foreground">Due Date</p>
+                        <p className="text-xs text-muted-foreground">到期日期</p>
                         <p className="text-sm font-medium">{book.due}</p>
                       </div>
                       <Badge variant={book.status === 'warning' ? 'warning' : 'success'}>
-                        {book.status === 'warning' ? 'Due Soon' : 'On Time'}
+                        {book.status === 'warning' ? '即将到期' : '正常'}
                       </Badge>
                     </div>
                   </div>
@@ -186,27 +184,27 @@ function UserDashboard() {
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Quick Links</CardTitle>
-            <CardDescription>Library services</CardDescription>
+            <CardTitle>快捷链接</CardTitle>
+            <CardDescription>图书馆服务</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <Button variant="outline" className="w-full justify-start" asChild>
                 <Link to="/books">
                   <BookOpen className="mr-3 h-5 w-5" />
-                  Browse Catalog
+                  浏览馆藏
                 </Link>
               </Button>
               <Button variant="outline" className="w-full justify-start" asChild>
                 <Link to="/reservations">
                   <BookMarked className="mr-3 h-5 w-5" />
-                  My Reservations
+                  我的预约
                 </Link>
               </Button>
             </div>
             <Button variant="link" className="p-0 h-auto mt-4" asChild>
               <Link to="/books">
-                View all books
+                查看全部图书
                 <ArrowRight className="ml-1 h-3 w-3" />
               </Link>
             </Button>
@@ -214,14 +212,13 @@ function UserDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Button variant="outline" className="h-auto py-4 justify-start" asChild>
           <Link to="/books">
             <BookOpen className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">Browse Catalog</div>
-              <div className="text-xs text-muted-foreground">Find your next read</div>
+              <div className="font-medium">浏览馆藏</div>
+              <div className="text-xs text-muted-foreground">寻找下一本好书</div>
             </div>
           </Link>
         </Button>
@@ -229,8 +226,8 @@ function UserDashboard() {
           <Link to="/borrowings">
             <Calendar className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">My Borrowings</div>
-              <div className="text-xs text-muted-foreground">View history & due dates</div>
+              <div className="font-medium">我的借阅</div>
+              <div className="text-xs text-muted-foreground">查看历史与到期日期</div>
             </div>
           </Link>
         </Button>
@@ -238,8 +235,8 @@ function UserDashboard() {
           <Link to="/reservations">
             <BookMarked className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">My Reservations</div>
-              <div className="text-xs text-muted-foreground">Check queue status</div>
+              <div className="font-medium">我的预约</div>
+              <div className="text-xs text-muted-foreground">查看排队状态</div>
             </div>
           </Link>
         </Button>
@@ -247,8 +244,8 @@ function UserDashboard() {
           <Link to="/profile">
             <Users className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">My Profile</div>
-              <div className="text-xs text-muted-foreground">Manage account</div>
+              <div className="font-medium">个人中心</div>
+              <div className="text-xs text-muted-foreground">管理账号</div>
             </div>
           </Link>
         </Button>
@@ -285,28 +282,28 @@ function AdminDashboard() {
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <StatCard
-          title="Total Books"
+          title="图书总数"
           value={totalBooks.toLocaleString()}
           icon={BookOpen}
         />
         <StatCard
-          title="Active Borrowings"
+          title="当前借阅"
           value={activeBorrows}
           icon={BookMarked}
         />
         <StatCard
-          title="Overdue Books"
+          title="逾期图书"
           value={overdueBooks}
           icon={AlertCircle}
           variant={overdueBooks > 10 ? 'destructive' : 'warning'}
         />
         <StatCard
-          title="Outstanding Fines"
-          value={`$${Number(totalFines).toFixed(2)}`}
+          title="待缴罚金"
+          value={`¥${Number(totalFines).toFixed(2)}`}
           icon={DollarSign}
         />
         <StatCard
-          title="Total Users"
+          title="用户总数"
           value={totalUsers}
           icon={Users}
         />
@@ -315,41 +312,41 @@ function AdminDashboard() {
       <div className="grid gap-6 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Overview</CardTitle>
-            <CardDescription>Library system at a glance</CardDescription>
+            <CardTitle>概览</CardTitle>
+            <CardDescription>图书馆系统一览</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 text-sm">
-              <p><span className="text-muted-foreground">Books in catalog:</span> <span className="font-medium">{books.total ?? 0}</span></p>
-              <p><span className="text-muted-foreground">Available copies:</span> <span className="font-medium">{books.availableCopies ?? 0}</span></p>
-              <p><span className="text-muted-foreground">Active borrowings:</span> <span className="font-medium">{borrowings.active ?? 0}</span></p>
-              <p><span className="text-muted-foreground">Overdue:</span> <span className="font-medium">{borrowings.overdue ?? 0}</span></p>
-              <p><span className="text-muted-foreground">Unpaid fines:</span> <span className="font-medium">${Number(fines.unpaidAmount ?? 0).toFixed(2)}</span></p>
+              <p><span className="text-muted-foreground">馆藏图书：</span> <span className="font-medium">{books.total ?? 0}</span></p>
+              <p><span className="text-muted-foreground">可借副本：</span> <span className="font-medium">{books.availableCopies ?? 0}</span></p>
+              <p><span className="text-muted-foreground">当前借阅：</span> <span className="font-medium">{borrowings.active ?? 0}</span></p>
+              <p><span className="text-muted-foreground">逾期数量：</span> <span className="font-medium">{borrowings.overdue ?? 0}</span></p>
+              <p><span className="text-muted-foreground">未缴罚金：</span> <span className="font-medium">¥{Number(fines.unpaidAmount ?? 0).toFixed(2)}</span></p>
             </div>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
-            <CardDescription>Period overview</CardDescription>
+            <CardTitle>快速统计</CardTitle>
+            <CardDescription>周期概览</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Users</span>
+                <span className="text-muted-foreground">用户总数</span>
                 <span className="font-medium">{users.total ?? 0}</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Recent borrowings (period)</span>
+                <span className="text-muted-foreground">近期借阅（周期）</span>
                 <span className="font-medium">{borrowings.recentBorrowings ?? 0}</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Recent returns (period)</span>
+                <span className="text-muted-foreground">近期归还（周期）</span>
                 <span className="font-medium">{borrowings.recentReturns ?? 0}</span>
               </div>
             </div>
@@ -357,14 +354,13 @@ function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Button variant="outline" className="h-auto py-4 justify-start" asChild>
           <Link to="/books">
             <BookOpen className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">Manage Books</div>
-              <div className="text-xs text-muted-foreground">Add, edit, or remove</div>
+              <div className="font-medium">图书管理</div>
+              <div className="text-xs text-muted-foreground">添加、编辑或删除</div>
             </div>
           </Link>
         </Button>
@@ -372,8 +368,8 @@ function AdminDashboard() {
           <Link to="/users">
             <Users className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">Manage Users</div>
-              <div className="text-xs text-muted-foreground">View all users</div>
+              <div className="font-medium">用户管理</div>
+              <div className="text-xs text-muted-foreground">查看所有用户</div>
             </div>
           </Link>
         </Button>
@@ -381,8 +377,8 @@ function AdminDashboard() {
           <Link to="/statistics">
             <TrendingUp className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">View Statistics</div>
-              <div className="text-xs text-muted-foreground">Detailed analytics</div>
+              <div className="font-medium">数据统计</div>
+              <div className="text-xs text-muted-foreground">详细分析</div>
             </div>
           </Link>
         </Button>
@@ -390,8 +386,8 @@ function AdminDashboard() {
           <Link to="/borrowings">
             <Calendar className="mr-3 h-5 w-5" />
             <div className="text-left">
-              <div className="font-medium">All Borrowings</div>
-              <div className="text-xs text-muted-foreground">Overdue & active</div>
+              <div className="font-medium">全部借阅</div>
+              <div className="text-xs text-muted-foreground">逾期与活跃</div>
             </div>
           </Link>
         </Button>

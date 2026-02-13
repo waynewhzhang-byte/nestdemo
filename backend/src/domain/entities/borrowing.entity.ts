@@ -1,4 +1,4 @@
-import { BorrowingStatus, Role } from '@prisma/client';
+import { BorrowingStatus, Role } from "@prisma/client";
 
 export interface BorrowingProps {
   id: string;
@@ -21,23 +21,43 @@ export class Borrowing {
     this.props = props;
   }
 
-  get id(): string { return this.props.id; }
-  get userId(): string { return this.props.userId; }
-  get bookId(): string { return this.props.bookId; }
-  get borrowedAt(): Date { return this.props.borrowedAt; }
-  get dueDate(): Date { return this.props.dueDate; }
-  get returnedAt(): Date | undefined { return this.props.returnedAt; }
-  get status(): BorrowingStatus { return this.props.status; }
-  get renewedCount(): number { return this.props.renewedCount; }
-  get maxRenewals(): number { return this.props.maxRenewals; }
+  get id(): string {
+    return this.props.id;
+  }
+  get userId(): string {
+    return this.props.userId;
+  }
+  get bookId(): string {
+    return this.props.bookId;
+  }
+  get borrowedAt(): Date {
+    return this.props.borrowedAt;
+  }
+  get dueDate(): Date {
+    return this.props.dueDate;
+  }
+  get returnedAt(): Date | undefined {
+    return this.props.returnedAt;
+  }
+  get status(): BorrowingStatus {
+    return this.props.status;
+  }
+  get renewedCount(): number {
+    return this.props.renewedCount;
+  }
+  get maxRenewals(): number {
+    return this.props.maxRenewals;
+  }
 
   isActive(): boolean {
     return this.props.status === BorrowingStatus.ACTIVE;
   }
 
   isOverdue(): boolean {
-    return this.props.status === BorrowingStatus.OVERDUE || 
-           (this.isActive() && new Date() > this.props.dueDate);
+    return (
+      this.props.status === BorrowingStatus.OVERDUE ||
+      (this.isActive() && new Date() > this.props.dueDate)
+    );
   }
 
   isReturned(): boolean {
@@ -52,7 +72,7 @@ export class Borrowing {
 
   renew(newDueDate: Date): void {
     if (!this.canRenew(Role.STUDENT)) {
-      throw new Error('This borrowing cannot be renewed');
+      throw new Error("This borrowing cannot be renewed");
     }
     this.props.dueDate = newDueDate;
     this.props.renewedCount += 1;
@@ -60,7 +80,7 @@ export class Borrowing {
 
   return(): void {
     if (this.isReturned()) {
-      throw new Error('This book has already been returned');
+      throw new Error("This book has already been returned");
     }
     this.props.returnedAt = new Date();
     this.props.status = BorrowingStatus.RETURNED;
@@ -73,7 +93,9 @@ export class Borrowing {
   getDaysOverdue(): number {
     const now = new Date();
     if (now <= this.props.dueDate) return 0;
-    return Math.ceil((now.getTime() - this.props.dueDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil(
+      (now.getTime() - this.props.dueDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
   }
 
   toJSON(): BorrowingProps {

@@ -1,4 +1,4 @@
-import { FineStatus } from '@prisma/client';
+import { FineStatus } from "@prisma/client";
 
 export interface FineProps {
   id: string;
@@ -19,13 +19,27 @@ export class Fine {
     this.props = props;
   }
 
-  get id(): string { return this.props.id; }
-  get borrowingId(): string { return this.props.borrowingId; }
-  get userId(): string { return this.props.userId; }
-  get amount(): number { return this.props.amount; }
-  get reason(): string { return this.props.reason; }
-  get status(): FineStatus { return this.props.status; }
-  get paidAt(): Date | undefined { return this.props.paidAt; }
+  get id(): string {
+    return this.props.id;
+  }
+  get borrowingId(): string {
+    return this.props.borrowingId;
+  }
+  get userId(): string {
+    return this.props.userId;
+  }
+  get amount(): number {
+    return this.props.amount;
+  }
+  get reason(): string {
+    return this.props.reason;
+  }
+  get status(): FineStatus {
+    return this.props.status;
+  }
+  get paidAt(): Date | undefined {
+    return this.props.paidAt;
+  }
 
   isUnpaid(): boolean {
     return this.props.status === FineStatus.UNPAID;
@@ -41,10 +55,10 @@ export class Fine {
 
   pay(amount: number): void {
     if (this.isPaid()) {
-      throw new Error('This fine has already been fully paid');
+      throw new Error("This fine has already been fully paid");
     }
     if (amount > this.props.amount) {
-      throw new Error('Payment amount exceeds fine amount');
+      throw new Error("Payment amount exceeds fine amount");
     }
     this.props.status = FineStatus.PAID;
     this.props.paidAt = new Date();
@@ -52,7 +66,7 @@ export class Fine {
 
   waive(): void {
     if (this.isPaid()) {
-      throw new Error('Cannot waive a paid fine');
+      throw new Error("Cannot waive a paid fine");
     }
     this.props.status = FineStatus.PAID;
     this.props.paidAt = new Date();

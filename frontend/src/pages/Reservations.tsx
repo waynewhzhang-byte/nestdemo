@@ -91,15 +91,15 @@ export default function Reservations() {
   const getStatusBadge = (status: ReservationStatus) => {
     switch (status) {
       case 'PENDING':
-        return <Badge variant="warning">In Queue</Badge>;
+        return <Badge variant="warning">排队中</Badge>;
       case 'READY':
-        return <Badge variant="success">Ready to Pick Up</Badge>;
+        return <Badge variant="success">可取书</Badge>;
       case 'FULFILLED':
-        return <Badge variant="secondary">Fulfilled</Badge>;
+        return <Badge variant="secondary">已完成</Badge>;
       case 'CANCELLED':
-        return <Badge variant="outline">Cancelled</Badge>;
+        return <Badge variant="outline">已取消</Badge>;
       case 'EXPIRED':
-        return <Badge variant="outline">Expired</Badge>;
+        return <Badge variant="outline">已过期</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -126,24 +126,24 @@ export default function Reservations() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-            My Reservations
+            我的预约
           </h2>
           <p className="text-muted-foreground">
-            Track your book reservations and queue positions
+            追踪您的图书预约和排队情况
           </p>
         </div>
         <Button asChild>
           <Link to="/books">
             <BookMarked className="mr-2 h-4 w-4" />
-            Reserve a Book
+            预约图书
           </Link>
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Pending Reservations" value={stats.pending} icon={Clock} variant="warning" />
-        <StatCard title="Ready for Pickup" value={stats.ready} icon={CheckCircle} variant="success" />
-        <StatCard title="Total Active" value={stats.total} icon={BookMarked} variant="default" />
+        <StatCard title="等待中预约" value={stats.pending} icon={Clock} variant="warning" />
+        <StatCard title="可取书" value={stats.ready} icon={CheckCircle} variant="success" />
+        <StatCard title="总计活跃" value={stats.total} icon={BookMarked} variant="default" />
       </div>
 
       {stats.ready > 0 && (
@@ -153,10 +153,10 @@ export default function Reservations() {
               <AlertCircle className="h-5 w-5 text-success mt-0.5" />
               <div>
                 <p className="font-medium text-success">
-                  You have {stats.ready} book{stats.ready !== 1 ? 's' : ''} ready for pickup!
+                  您有 {stats.ready} 本图书可以取书了！
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Please pick up within 3 days or your reservation may expire.
+                  请在 3 天内取书，否则预约可能会过期。
                 </p>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function Reservations() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search reservations..."
+          placeholder="搜索预约..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
@@ -176,9 +176,9 @@ export default function Reservations() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="pending">Pending ({pendingReservations.length})</TabsTrigger>
-          <TabsTrigger value="ready">Ready ({readyReservations.length})</TabsTrigger>
-          <TabsTrigger value="history">History ({historyReservations.length})</TabsTrigger>
+          <TabsTrigger value="pending">等待中 ({pendingReservations.length})</TabsTrigger>
+          <TabsTrigger value="ready">可取书 ({readyReservations.length})</TabsTrigger>
+          <TabsTrigger value="history">历史记录 ({historyReservations.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="mt-6">
@@ -187,8 +187,8 @@ export default function Reservations() {
               {filteredReservations(pendingReservations).length === 0 ? (
                 <EmptyState
                   icon={BookMarked}
-                  title="No pending reservations"
-                  description="You're not in any queue. Browse the catalog to reserve a book!"
+                  title="暂无等待中的预约"
+                  description="您目前不在任何排队队列中。去图书库预约图书吧！"
                 />
               ) : (
                 <div className="divide-y">
@@ -205,7 +205,7 @@ export default function Reservations() {
                           <p className="text-sm text-muted-foreground">{reservation.book?.author}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-muted-foreground">
-                              Reserved: {reservation.createdAt ? new Date(reservation.createdAt).toLocaleDateString() : ''}
+                              预约日期: {reservation.createdAt ? new Date(reservation.createdAt).toLocaleDateString() : ''}
                             </span>
                           </div>
                         </div>
@@ -213,7 +213,7 @@ export default function Reservations() {
                       <div className="flex items-center gap-2 sm:flex-shrink-0">
                         <Button variant="outline" size="sm" onClick={() => handleCancel(reservation)}>
                           <XCircle className="h-4 w-4 mr-1" />
-                          Cancel
+                          取消
                         </Button>
                       </div>
                     </div>
@@ -230,8 +230,8 @@ export default function Reservations() {
               {filteredReservations(readyReservations).length === 0 ? (
                 <EmptyState
                   icon={CheckCircle}
-                  title="No books ready for pickup"
-                  description="When your reserved books become available, they'll appear here."
+                  title="暂无待取的图书"
+                  description="当您预约的图书可取时，它们将显示在这里。"
                 />
               ) : (
                 <div className="divide-y">
@@ -248,17 +248,17 @@ export default function Reservations() {
                           <p className="text-sm text-muted-foreground">{reservation.book?.author}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="success" className="text-xs">
-                              Ready for Pickup
+                              可取书
                             </Badge>
                             <span className="text-xs text-warning font-medium">
-                              Pick up by: {reservation.expiresAt ? new Date(reservation.expiresAt).toLocaleDateString() : ''}
+                              取书截止日期: {reservation.expiresAt ? new Date(reservation.expiresAt).toLocaleDateString() : ''}
                             </span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:flex-shrink-0">
                         <Button variant="destructive" size="sm" onClick={() => handleCancel(reservation)}>
-                          Cancel
+                          取消
                         </Button>
                       </div>
                     </div>
@@ -275,8 +275,8 @@ export default function Reservations() {
               {filteredReservations(historyReservations).length === 0 ? (
                 <EmptyState
                   icon={BookMarked}
-                  title="No reservation history"
-                  description="Your past reservations will appear here."
+                  title="暂无预约历史"
+                  description="您过去的预约将显示在这里。"
                 />
               ) : (
                 <div className="divide-y">
@@ -291,7 +291,7 @@ export default function Reservations() {
                         </p>
                         <p className="text-sm text-muted-foreground">{reservation.book?.author}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Reserved: {reservation.createdAt ? new Date(reservation.createdAt).toLocaleDateString() : ''}
+                          预约日期: {reservation.createdAt ? new Date(reservation.createdAt).toLocaleDateString() : ''}
                         </p>
                       </div>
                       {getStatusBadge(reservation.status)}
@@ -307,26 +307,26 @@ export default function Reservations() {
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Reservation</DialogTitle>
+            <DialogTitle>取消预约</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your reservation for &quot;{selectedReservation?.book?.title}&quot;?
+              您确定要取消 &quot;{selectedReservation?.book?.title}&quot; 的预约吗？
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              This action cannot be undone. You&apos;ll need to make a new reservation if you change your mind.
+              此操作无法撤销。如果您改变主意，需要重新预约。
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
-              Keep Reservation
+              保留预约
             </Button>
             <Button
               variant="destructive"
               onClick={confirmCancel}
               disabled={cancelMutation.isPending}
             >
-              Cancel Reservation
+              取消预约
             </Button>
           </DialogFooter>
         </DialogContent>
