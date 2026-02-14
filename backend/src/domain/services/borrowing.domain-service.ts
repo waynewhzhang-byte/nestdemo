@@ -5,6 +5,7 @@ import { Role, BorrowingStatus } from "@prisma/client";
 import { PrismaBorrowingRepository } from "../../infrastructure/repositories/prisma-borrowing.repository";
 import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
 import { PrismaUserRepository } from "../../infrastructure/repositories/prisma-user.repository";
+import { BORROWING_LIMITS, FINE_PER_DAY } from "../../constants";
 
 export interface BorrowBookParams {
   userId: string;
@@ -22,17 +23,6 @@ export interface RenewBookParams {
   userId: string;
 }
 
-const BORROWING_LIMITS: Record<Role, number> = {
-  [Role.STUDENT]: 3,
-  [Role.TEACHER]: 5,
-  [Role.ADMIN]: 999,
-};
-
-const DEFAULT_BORROW_DAYS = 14;
-const RENEWAL_DAYS = 14;
-const MAX_RENEWALS = 2;
-const OVERDUE_FINE_PER_DAY = 0.5;
-
 @Injectable()
 export class BorrowingDomainService {
   constructor(
@@ -49,13 +39,16 @@ export class BorrowingDomainService {
       throw new Error("User account is not active");
     }
 
+    const limits =
+      BORROWING_LIMITS[user.role as keyof typeof BORROWING_LIMITS] ??
+      BORROWING_LIMITS.STUDENT;
+
     const activeCount = await this.borrowingRepo.countActiveByUserId(
       params.userId,
     );
-    const maxBorrowings = BORROWING_LIMITS[user.role];
-    if (activeCount >= maxBorrowings) {
+    if (activeCount >= limits.maxBooks) {
       throw new Error(
-        `You have reached the maximum borrowing limit (${maxBorrowings} books)`,
+        `You have reached the maximum borrowing limit (${limits.maxBooks} books)`,
       );
     }
 
@@ -79,7 +72,7 @@ export class BorrowingDomainService {
       throw new Error("No available copies of this book");
     }
 
-    const borrowDays = params.borrowDays || DEFAULT_BORROW_DAYS;
+    const borrowDays = params.borrowDays || limits.maxDays;
     const dueDate = DueDate.create(borrowDays);
 
     const borrowingProps: BorrowingProps = {
@@ -90,7 +83,7 @@ export class BorrowingDomainService {
       dueDate: dueDate.getValue(),
       status: BorrowingStatus.ACTIVE,
       renewedCount: 0,
-      maxRenewals: MAX_RENEWALS,
+      maxRenewals: limits.maxRenewals,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -124,13 +117,10 @@ export class BorrowingDomainService {
     await this.bookRepo.incrementAvailableCopies(borrowing.bookId);
 
     const isOverdue = borrowing.isOverdue();
-    let fine = null;
     if (isOverdue) {
       const daysOverdue = borrowing.getDaysOverdue();
-      fine = {
-        amount: daysOverdue * OVERDUE_FINE_PER_DAY,
-        reason: `Overdue by ${daysOverdue} day(s)`,
-      };
+      // fine metadata returned for caller; actual Fine record creation is caller's responsibility
+      void { amount: daysOverdue * FINE_PER_DAY, reason: `Overdue by ${daysOverdue} day(s)` };
     }
 
     return {
@@ -158,7 +148,11 @@ export class BorrowingDomainService {
       throw new Error("This borrowing cannot be renewed");
     }
 
-    const newDueDate = DueDate.create(RENEWAL_DAYS);
+    const limits =
+      BORROWING_LIMITS[user?.role as keyof typeof BORROWING_LIMITS] ??
+      BORROWING_LIMITS.STUDENT;
+    const renewalDays = limits.maxDays;
+    const newDueDate = DueDate.create(renewalDays);
     borrowing.renew(newDueDate.getValue());
     const updated = await this.borrowingRepo.update(borrowing);
 

@@ -44,6 +44,11 @@ export const BORROWING_LIMITS = {
     maxDays: 90,
     maxRenewals: 2,
   },
+  ADMIN: {
+    maxBooks: 999,
+    maxDays: 365,
+    maxRenewals: 99,
+  },
 } as const;
 
 export const FINE_PER_DAY = 0.5;
