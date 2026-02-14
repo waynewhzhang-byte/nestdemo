@@ -53,6 +53,7 @@ export class BorrowingsService {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.includes("not found")) throw new NotFoundException(message);
       if (message.includes("not active")) throw new ForbiddenException(message);
       if (message.includes("reached the maximum"))
         throw new BadRequestException(message);

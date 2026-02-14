@@ -1,26 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BorrowingsService } from './borrowings.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { BorrowingDomainService } from '../domain/services/borrowing.domain-service';
 import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 
 describe('BorrowingsService', () => {
   let service: BorrowingsService;
-  let txMock: {
-    user: { findUnique: jest.Mock };
-    book: { findUnique: jest.Mock; updateMany: jest.Mock; update: jest.Mock };
-    borrowing: { findFirst: jest.Mock; create: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; update: jest.Mock; count: jest.Mock };
-    fine: { count: jest.Mock; create?: jest.Mock };
-    reservation?: { findFirst: jest.Mock; update: jest.Mock };
+  let prismaMock: {
+    borrowing: {
+      findFirst: jest.Mock;
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+      updateMany: jest.Mock;
+    };
+  };
+  let mockBorrowingDomainService: {
+    borrowBook: jest.Mock;
+    returnBook: jest.Mock;
+    renewBook: jest.Mock;
   };
 
   const mockUser = { id: 'user-1', email: 'test@school.edu', role: 'STUDENT', isActive: true };
-  const mockBook = { id: 'book-1', title: 'Test Book', availableCopies: 3, status: 'AVAILABLE' };
+  const mockBook = { id: 'book-1', title: 'Test Book', author: 'Author', isbn: '123', availableCopies: 3, status: 'AVAILABLE' };
   const mockBorrowing = {
     id: 'borrowing-1',
     userId: 'user-1',
     bookId: 'book-1',
     borrowedAt: new Date(),
-    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     returnedAt: null,
     status: 'ACTIVE',
     renewedCount: 0,
@@ -30,29 +38,27 @@ describe('BorrowingsService', () => {
   };
 
   beforeEach(async () => {
-    txMock = {
-      user: { findUnique: jest.fn() },
-      book: { findUnique: jest.fn(), updateMany: jest.fn(), update: jest.fn() },
+    prismaMock = {
       borrowing: {
         findFirst: jest.fn(),
-        create: jest.fn(),
-        findMany: jest.fn(),
         findUnique: jest.fn(),
-        update: jest.fn(),
+        findMany: jest.fn(),
         count: jest.fn(),
+        updateMany: jest.fn(),
       },
-      fine: { count: jest.fn() },
-      reservation: { findFirst: jest.fn(), update: jest.fn() },
     };
-    const mockPrisma = {
-      ...txMock,
-      $transaction: jest.fn((fn: (tx: typeof txMock) => Promise<unknown>) => fn(txMock)),
+
+    mockBorrowingDomainService = {
+      borrowBook: jest.fn(),
+      returnBook: jest.fn(),
+      renewBook: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BorrowingsService,
-        { provide: PrismaService, useValue: mockPrisma },
+        { provide: PrismaService, useValue: prismaMock },
+        { provide: BorrowingDomainService, useValue: mockBorrowingDomainService },
       ],
     }).compile();
 
@@ -65,14 +71,8 @@ describe('BorrowingsService', () => {
 
   describe('borrowBook', () => {
     it('should successfully borrow a book', async () => {
-      txMock.user.findUnique.mockResolvedValue(mockUser);
-      txMock.borrowing.count.mockResolvedValue(0);
-      txMock.fine.count.mockResolvedValue(0);
-      txMock.book.findUnique.mockResolvedValue({ ...mockBook, status: 'AVAILABLE' });
-      txMock.borrowing.findFirst.mockResolvedValue(null);
-      txMock.book.updateMany.mockResolvedValue({ count: 1 });
-      txMock.book.findUnique.mockResolvedValue({ availableCopies: 0 });
-      txMock.borrowing.create.mockResolvedValue({
+      mockBorrowingDomainService.borrowBook.mockResolvedValue({ message: 'Book borrowed successfully', borrowing: {} });
+      prismaMock.borrowing.findFirst.mockResolvedValue({
         ...mockBorrowing,
         book: { id: 'book-1', title: 'Test Book', author: 'Author', isbn: '123' },
       });
@@ -84,21 +84,13 @@ describe('BorrowingsService', () => {
     });
 
     it('should throw NotFoundException if book not found', async () => {
-      txMock.user.findUnique.mockResolvedValue(mockUser);
-      txMock.borrowing.count.mockResolvedValue(0);
-      txMock.fine.count.mockResolvedValue(0);
-      txMock.book.findUnique.mockResolvedValue(null);
+      mockBorrowingDomainService.borrowBook.mockRejectedValue(new Error('Book not found'));
 
       await expect(service.borrowBook('user-1', { bookId: 'book-1' })).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if no copies available', async () => {
-      txMock.user.findUnique.mockResolvedValue(mockUser);
-      txMock.borrowing.count.mockResolvedValue(0);
-      txMock.fine.count.mockResolvedValue(0);
-      txMock.book.findUnique.mockResolvedValue({ ...mockBook, availableCopies: 0 });
-      txMock.borrowing.findFirst.mockResolvedValue(null);
-      txMock.book.updateMany.mockResolvedValue({ count: 0 });
+    it('should throw ConflictException if book already borrowed', async () => {
+      mockBorrowingDomainService.borrowBook.mockRejectedValue(new Error('You have already borrowed this book'));
 
       await expect(service.borrowBook('user-1', { bookId: 'book-1' })).rejects.toThrow(ConflictException);
     });
@@ -106,17 +98,8 @@ describe('BorrowingsService', () => {
 
   describe('returnBook', () => {
     it('should successfully return a book', async () => {
-      const borrowingWithUser = {
-        ...mockBorrowing,
-        userId: 'user-1',
-        user: { id: 'user-1', role: 'STUDENT' },
-        bookId: 'book-1',
-        book: { id: 'book-1' },
-      };
-      txMock.borrowing.findUnique.mockResolvedValue(borrowingWithUser);
-      txMock.book.update.mockResolvedValue({});
-      txMock.reservation!.findFirst.mockResolvedValue(null);
-      txMock.borrowing.update.mockResolvedValue({
+      mockBorrowingDomainService.returnBook.mockResolvedValue({ message: 'Book returned successfully', borrowing: {} });
+      prismaMock.borrowing.findUnique.mockResolvedValue({
         ...mockBorrowing,
         status: 'RETURNED',
         returnedAt: new Date(),
@@ -130,7 +113,7 @@ describe('BorrowingsService', () => {
     });
 
     it('should throw NotFoundException if borrowing not found', async () => {
-      txMock.borrowing.findUnique.mockResolvedValue(null);
+      mockBorrowingDomainService.returnBook.mockRejectedValue(new Error('Borrowing record not found'));
 
       await expect(
         service.returnBook('user-1', { borrowingId: 'non-existent' }),
@@ -140,10 +123,8 @@ describe('BorrowingsService', () => {
 
   describe('renewBorrowing', () => {
     it('should successfully renew a borrowing', async () => {
-      const borrowingWithUser = { ...mockBorrowing, user: { id: 'user-1', role: 'STUDENT' }, book: { id: 'book-1' }, renewedCount: 0, maxRenewals: 2 };
-      txMock.borrowing.findUnique.mockResolvedValue(borrowingWithUser);
-      txMock.reservation!.findFirst.mockResolvedValue(null);
-      txMock.borrowing.update.mockResolvedValue({ ...borrowingWithUser, renewedCount: 1 });
+      mockBorrowingDomainService.renewBook.mockResolvedValue({ message: 'Borrowing renewed successfully', borrowing: {} });
+      prismaMock.borrowing.findUnique.mockResolvedValue({ ...mockBorrowing, renewedCount: 1, maxRenewals: 2 });
 
       const result = await service.renewBorrowing('user-1', { borrowingId: 'borrowing-1' });
 
@@ -152,8 +133,7 @@ describe('BorrowingsService', () => {
     });
 
     it('should throw BadRequestException if max renewals reached', async () => {
-      const borrowingWithUser = { ...mockBorrowing, user: { id: 'user-1', role: 'STUDENT' }, renewedCount: 2, maxRenewals: 2 };
-      txMock.borrowing.findUnique.mockResolvedValue(borrowingWithUser);
+      mockBorrowingDomainService.renewBook.mockRejectedValue(new Error('This borrowing cannot be renewed'));
 
       await expect(
         service.renewBorrowing('user-1', { borrowingId: 'borrowing-1' }),
@@ -163,8 +143,8 @@ describe('BorrowingsService', () => {
 
   describe('getMyBorrowings', () => {
     it('should return user borrowings with pagination', async () => {
-      txMock.borrowing.findMany.mockResolvedValue([mockBorrowing]);
-      txMock.borrowing.count.mockResolvedValue(1);
+      prismaMock.borrowing.findMany.mockResolvedValue([mockBorrowing]);
+      prismaMock.borrowing.count.mockResolvedValue(1);
 
       const result = await service.getMyBorrowings('user-1', {});
 
@@ -180,7 +160,7 @@ describe('BorrowingsService', () => {
         status: 'ACTIVE',
         dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
       };
-      txMock.borrowing.findMany.mockResolvedValue([overdueBorrowing]);
+      prismaMock.borrowing.findMany.mockResolvedValue([overdueBorrowing]);
 
       const result = await service.getOverdueBorrowings();
 

@@ -1,14 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BooksService } from './books.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotFoundException } from '@nestjs/common';
+import { BookDomainService } from '../domain/services/book.domain-service';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 type BookMock = {
   findMany: jest.Mock;
   findUnique: jest.Mock;
-  create: jest.Mock;
-  update: jest.Mock;
-  delete: jest.Mock;
   count: jest.Mock;
   groupBy: jest.Mock;
   aggregate: jest.Mock;
@@ -18,6 +16,12 @@ describe('BooksService', () => {
   let service: BooksService;
   let bookMock: BookMock;
   let borrowingCountMock: jest.Mock;
+  let mockBookDomainService: {
+    createBook: jest.Mock;
+    updateBook: jest.Mock;
+    canDelete: jest.Mock;
+    deleteBook: jest.Mock;
+  };
 
   const mockBook = {
     id: 'book-1',
@@ -41,14 +45,19 @@ describe('BooksService', () => {
     bookMock = {
       findMany: jest.fn(),
       findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
       count: jest.fn(),
       groupBy: jest.fn(),
       aggregate: jest.fn(),
     };
     borrowingCountMock = jest.fn();
+
+    mockBookDomainService = {
+      createBook: jest.fn(),
+      updateBook: jest.fn(),
+      canDelete: jest.fn(),
+      deleteBook: jest.fn(),
+    };
+
     const mockPrisma = {
       book: bookMock,
       borrowing: { count: borrowingCountMock },
@@ -58,6 +67,7 @@ describe('BooksService', () => {
       providers: [
         BooksService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: BookDomainService, useValue: mockBookDomainService },
       ],
     }).compile();
 
@@ -130,20 +140,30 @@ describe('BooksService', () => {
     };
 
     it('should create a new book', async () => {
-      bookMock.findUnique.mockResolvedValue(null);
-      bookMock.create.mockResolvedValue(mockBook);
+      mockBookDomainService.createBook.mockResolvedValue({
+        book: { toJSON: () => mockBook },
+      });
 
       const result = await service.create(createDto);
 
       expect(result).toEqual(mockBook);
+    });
+
+    it('should throw BadRequestException if ISBN already exists', async () => {
+      mockBookDomainService.createBook.mockRejectedValue(
+        new Error('A book with this ISBN already exists'),
+      );
+
+      await expect(service.create(createDto)).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('update', () => {
     it('should update an existing book', async () => {
       const updateDto = { title: 'Updated Title' };
-      bookMock.findUnique.mockResolvedValue(mockBook);
-      bookMock.update.mockResolvedValue({ ...mockBook, ...updateDto });
+      mockBookDomainService.updateBook.mockResolvedValue({
+        book: { toJSON: () => ({ ...mockBook, ...updateDto }) },
+      });
 
       const result = await service.update('book-1', updateDto);
 
@@ -151,7 +171,7 @@ describe('BooksService', () => {
     });
 
     it('should throw NotFoundException if book not found', async () => {
-      bookMock.findUnique.mockResolvedValue(null);
+      mockBookDomainService.updateBook.mockRejectedValue(new Error('Book not found'));
 
       await expect(service.update('non-existent', { title: 'Test' })).rejects.toThrow(NotFoundException);
     });
@@ -159,23 +179,23 @@ describe('BooksService', () => {
 
   describe('remove', () => {
     it('should delete a book when no active borrowings or reservations', async () => {
-      const bookWithCount = {
-        ...mockBook,
-        _count: { borrowings: 0, reservations: 0 },
-      };
-      bookMock.findUnique.mockResolvedValue(bookWithCount);
-      bookMock.delete.mockResolvedValue(mockBook);
+      mockBookDomainService.canDelete.mockResolvedValue({ canDelete: true });
+      mockBookDomainService.deleteBook.mockResolvedValue(undefined);
 
       const result = await service.remove('book-1');
 
       expect(result).toEqual({ message: 'Book deleted successfully' });
-      expect(bookMock.delete).toHaveBeenCalledWith({ where: { id: 'book-1' } });
+      expect(mockBookDomainService.canDelete).toHaveBeenCalledWith('book-1');
+      expect(mockBookDomainService.deleteBook).toHaveBeenCalledWith('book-1');
     });
 
-    it('should throw NotFoundException if book not found', async () => {
-      bookMock.findUnique.mockResolvedValue(null);
+    it('should throw BadRequestException when book has active borrowings', async () => {
+      mockBookDomainService.canDelete.mockResolvedValue({
+        canDelete: false,
+        reason: 'Cannot delete book with 1 active borrowing(s)',
+      });
 
-      await expect(service.remove('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('book-1')).rejects.toThrow(BadRequestException);
     });
   });
 

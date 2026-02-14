@@ -20,20 +20,24 @@ export class BooksService {
   ) {}
 
   async create(createBookDto: CreateBookDto) {
-    const result = await this.bookDomainService.createBook({
-      isbn: createBookDto.isbn,
-      title: createBookDto.title,
-      author: createBookDto.author,
-      publisher: createBookDto.publisher,
-      publishedYear: createBookDto.publishedYear,
-      category: createBookDto.category,
-      description: createBookDto.description,
-      coverImage: createBookDto.coverImage,
-      location: createBookDto.location,
-      totalCopies: createBookDto.totalCopies,
-    });
-
-    return result.book.toJSON();
+    try {
+      const result = await this.bookDomainService.createBook({
+        isbn: createBookDto.isbn,
+        title: createBookDto.title,
+        author: createBookDto.author,
+        publisher: createBookDto.publisher,
+        publishedYear: createBookDto.publishedYear,
+        category: createBookDto.category,
+        description: createBookDto.description,
+        coverImage: createBookDto.coverImage,
+        location: createBookDto.location,
+        totalCopies: createBookDto.totalCopies,
+      });
+      return result.book.toJSON();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new BadRequestException(message);
+    }
   }
 
   async findAll(query: QueryBooksDto) {
@@ -135,21 +139,26 @@ export class BooksService {
   }
 
   async update(id: string, updateBookDto: UpdateBookDto) {
-    const result = await this.bookDomainService.updateBook({
-      id,
-      isbn: updateBookDto.isbn,
-      title: updateBookDto.title,
-      author: updateBookDto.author,
-      publisher: updateBookDto.publisher,
-      publishedYear: updateBookDto.publishedYear,
-      category: updateBookDto.category,
-      description: updateBookDto.description,
-      coverImage: updateBookDto.coverImage,
-      location: updateBookDto.location,
-      totalCopies: updateBookDto.totalCopies,
-    });
-
-    return result.book.toJSON();
+    try {
+      const result = await this.bookDomainService.updateBook({
+        id,
+        isbn: updateBookDto.isbn,
+        title: updateBookDto.title,
+        author: updateBookDto.author,
+        publisher: updateBookDto.publisher,
+        publishedYear: updateBookDto.publishedYear,
+        category: updateBookDto.category,
+        description: updateBookDto.description,
+        coverImage: updateBookDto.coverImage,
+        location: updateBookDto.location,
+        totalCopies: updateBookDto.totalCopies,
+      });
+      return result.book.toJSON();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.includes("not found")) throw new NotFoundException(message);
+      throw new BadRequestException(message);
+    }
   }
 
   async adjustInventory(id: string, adjustDto: AdjustInventoryDto) {
