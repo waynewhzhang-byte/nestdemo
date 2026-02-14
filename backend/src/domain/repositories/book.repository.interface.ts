@@ -15,4 +15,6 @@ export interface IBookRepository {
   decrementAvailableCopies(id: string): Promise<boolean>;
   incrementAvailableCopies(id: string): Promise<void>;
   adjustInventory(id: string, adjustment: number): Promise<Book>;
+  countActiveBorrowings(bookId: string): Promise<number>;
+  countActiveReservations(bookId: string): Promise<number>;
 }

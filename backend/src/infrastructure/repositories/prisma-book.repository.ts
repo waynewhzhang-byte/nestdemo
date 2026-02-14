@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { Book, BookProps } from "../../domain/entities/book.entity";
 import { IBookRepository } from "../../domain/repositories/book.repository.interface";
-import { BookStatus } from "@prisma/client";
+import { BookStatus, BorrowingStatus, ReservationStatus } from "@prisma/client";
 
 @Injectable()
 export class PrismaBookRepository implements IBookRepository {
@@ -117,5 +117,20 @@ export class PrismaBookRepository implements IBookRepository {
       },
     });
     return this.toEntity(updated);
+  }
+
+  async countActiveBorrowings(bookId: string): Promise<number> {
+    return this.prisma.borrowing.count({
+      where: { bookId, status: BorrowingStatus.ACTIVE },
+    });
+  }
+
+  async countActiveReservations(bookId: string): Promise<number> {
+    return this.prisma.reservation.count({
+      where: {
+        bookId,
+        status: { in: [ReservationStatus.PENDING, ReservationStatus.READY] },
+      },
+    });
   }
 }

@@ -164,32 +164,13 @@ export class BooksService {
   }
 
   async remove(id: string) {
-    const book = await this.prisma.book.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            borrowings: { where: { status: "ACTIVE" } },
-            reservations: { where: { status: { in: ["PENDING", "READY"] } } },
-          },
-        },
-      },
-    });
+    const { canDelete, reason } = await this.bookDomainService.canDelete(id);
 
-    if (!book) {
-      throw new NotFoundException("Book not found");
+    if (!canDelete) {
+      throw new BadRequestException(reason);
     }
 
-    const activeBorrowings = book._count.borrowings;
-    const activeReservations = book._count.reservations;
-
-    if (activeBorrowings > 0 || activeReservations > 0) {
-      throw new BadRequestException(
-        `Cannot delete book with ${activeBorrowings} active borrowings and ${activeReservations} active reservations`,
-      );
-    }
-
-    await this.bookRepo.delete(id);
+    await this.bookDomainService.deleteBook(id);
 
     return { message: "Book deleted successfully" };
   }

@@ -146,6 +146,26 @@ export class BookDomainService {
   }
 
   async canDelete(id: string): Promise<{ canDelete: boolean; reason?: string }> {
+    const activeBorrowings = await this.bookRepo.countActiveBorrowings(id);
+    if (activeBorrowings > 0) {
+      return {
+        canDelete: false,
+        reason: `Cannot delete book with ${activeBorrowings} active borrowing(s)`,
+      };
+    }
+
+    const activeReservations = await this.bookRepo.countActiveReservations(id);
+    if (activeReservations > 0) {
+      return {
+        canDelete: false,
+        reason: `Cannot delete book with ${activeReservations} active reservation(s)`,
+      };
+    }
+
     return { canDelete: true };
+  }
+
+  async deleteBook(id: string): Promise<void> {
+    await this.bookRepo.delete(id);
   }
 }
