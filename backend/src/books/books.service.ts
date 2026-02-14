@@ -4,7 +4,6 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { PrismaBookRepository } from "../infrastructure/repositories/prisma-book.repository";
 import { BookDomainService } from "../domain/services/book.domain-service";
 import {
   CreateBookDto,
@@ -18,7 +17,6 @@ export class BooksService {
   constructor(
     private prisma: PrismaService,
     private bookDomainService: BookDomainService,
-    private bookRepo: PrismaBookRepository,
   ) {}
 
   async create(createBookDto: CreateBookDto) {
@@ -127,13 +125,13 @@ export class BooksService {
   }
 
   async findByIsbn(isbn: string) {
-    const book = await this.bookRepo.findByISBN(isbn);
+    const book = await this.prisma.book.findUnique({ where: { isbn } });
 
     if (!book) {
       throw new NotFoundException("Book not found");
     }
 
-    return book.toJSON();
+    return book;
   }
 
   async update(id: string, updateBookDto: UpdateBookDto) {
