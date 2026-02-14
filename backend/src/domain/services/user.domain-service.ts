@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { User, UserProps } from "../entities/user.entity";
 import { PrismaUserRepository } from "../../infrastructure/repositories/prisma-user.repository";
-import { Role } from "@prisma/client";
+import { UserRole } from "../enums";
 
 export interface CreateUserParams {
   email: string;

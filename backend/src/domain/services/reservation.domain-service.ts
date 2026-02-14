@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Reservation, ReservationProps } from "../entities/reservation.entity";
 import { PrismaReservationRepository } from "../../infrastructure/repositories/prisma-reservation.repository";
 import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
-import { ReservationStatus } from "@prisma/client";
+import { ReservationStatus } from "../enums";
 
 export interface CreateReservationParams {
   userId: string;

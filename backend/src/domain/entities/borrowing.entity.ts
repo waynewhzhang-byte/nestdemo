@@ -1,4 +1,4 @@
-import { BorrowingStatus, Role } from "@prisma/client";
+import { BorrowingStatus, UserRole } from "../enums";
 
 export interface BorrowingProps {
   id: string;
@@ -64,14 +64,14 @@ export class Borrowing {
     return this.props.status === BorrowingStatus.RETURNED;
   }
 
-  canRenew(userRole: Role): boolean {
+  canRenew(userRole: UserRole): boolean {
     if (this.isReturned()) return false;
     if (this.props.status === BorrowingStatus.LOST) return false;
     return this.props.renewedCount < this.props.maxRenewals;
   }
 
   renew(newDueDate: Date): void {
-    if (!this.canRenew(Role.STUDENT)) {
+    if (!this.canRenew(UserRole.STUDENT)) {
       throw new Error("This borrowing cannot be renewed");
     }
     this.props.dueDate = newDueDate;

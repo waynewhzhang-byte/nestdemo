@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Fine, FineProps } from "../entities/fine.entity";
 import { PrismaFineRepository } from "../../infrastructure/repositories/prisma-fine.repository";
-import { FineStatus } from "@prisma/client";
+import { FineStatus } from "../enums";
 
 export interface CreateFineParams {
   borrowingId: string;

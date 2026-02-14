@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Book, BookProps } from "../entities/book.entity";
 import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
-import { BookStatus } from "@prisma/client";
+import { BookStatus } from "../enums";
 
 export interface CreateBookParams {
   isbn: string;

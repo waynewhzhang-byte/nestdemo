@@ -1,11 +1,11 @@
-import { Role } from "@prisma/client";
+import { UserRole } from "../enums";
 
 export interface UserProps {
   id: string;
   email: string;
   password: string;
   name: string;
-  role: Role;
+  role: UserRole;
   studentId?: string;
   teacherId?: string;
   phone?: string;
@@ -30,7 +30,7 @@ export class User {
   get name(): string {
     return this.props.name;
   }
-  get role(): Role {
+  get role(): UserRole {
     return this.props.role;
   }
   get studentId(): string | undefined {
@@ -47,15 +47,15 @@ export class User {
   }
 
   isStudent(): boolean {
-    return this.props.role === Role.STUDENT;
+    return this.props.role === UserRole.STUDENT;
   }
 
   isTeacher(): boolean {
-    return this.props.role === Role.TEACHER;
+    return this.props.role === UserRole.TEACHER;
   }
 
   isAdmin(): boolean {
-    return this.props.role === Role.ADMIN;
+    return this.props.role === UserRole.ADMIN;
   }
 
   canBorrow(): boolean {

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Borrowing, BorrowingProps } from "../entities/borrowing.entity";
 import { DueDate } from "../value-objects";
-import { Role, BorrowingStatus } from "@prisma/client";
+import { BorrowingStatus, UserRole } from "../enums";
 import { PrismaBorrowingRepository } from "../../infrastructure/repositories/prisma-borrowing.repository";
 import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
 import { PrismaUserRepository } from "../../infrastructure/repositories/prisma-user.repository";
@@ -128,7 +128,7 @@ export class BorrowingDomainService {
     }
 
     const user = await this.userRepo.findById(params.userId);
-    if (borrowing.userId !== params.userId && user?.role !== Role.ADMIN) {
+    if (borrowing.userId !== params.userId && user?.role !== UserRole.ADMIN) {
       throw new Error("You can only return your own borrowed books");
     }
 
@@ -181,11 +181,11 @@ export class BorrowingDomainService {
     }
 
     const user = await this.userRepo.findById(params.userId);
-    if (borrowing.userId !== params.userId && user?.role !== Role.ADMIN) {
+    if (borrowing.userId !== params.userId && user?.role !== UserRole.ADMIN) {
       throw new Error("You can only renew your own borrowed books");
     }
 
-    if (!borrowing.canRenew(user?.role || Role.STUDENT)) {
+    if (!borrowing.canRenew(user?.role || UserRole.STUDENT)) {
       throw new Error("This borrowing cannot be renewed");
     }
 

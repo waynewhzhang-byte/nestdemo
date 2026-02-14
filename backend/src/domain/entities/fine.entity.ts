@@ -1,4 +1,4 @@
-import { FineStatus } from "@prisma/client";
+import { FineStatus } from "../enums";
 
 export interface FineProps {
   id: string;

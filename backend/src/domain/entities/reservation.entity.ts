@@ -1,4 +1,4 @@
-import { ReservationStatus } from "@prisma/client";
+import { ReservationStatus } from "../enums";
 
 export interface ReservationProps {
   id: string;

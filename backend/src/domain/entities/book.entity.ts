@@ -1,4 +1,4 @@
-import { BookStatus } from "@prisma/client";
+import { BookStatus } from "../enums";
 
 export interface BookProps {
   id: string;
