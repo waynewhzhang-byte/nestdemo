@@ -1,10 +1,13 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { Borrowing, BorrowingProps } from "../entities/borrowing.entity";
 import { DueDate } from "../value-objects";
 import { BorrowingStatus, UserRole } from "../enums";
-import { PrismaBorrowingRepository } from "../../infrastructure/repositories/prisma-borrowing.repository";
-import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
-import { PrismaUserRepository } from "../../infrastructure/repositories/prisma-user.repository";
+import { IBorrowingRepository } from "../repositories/borrowing.repository.interface";
+import { IBookRepository } from "../repositories/book.repository.interface";
+import { IUserRepository } from "../repositories/user.repository.interface";
+import { BORROWING_REPOSITORY, BOOK_REPOSITORY, USER_REPOSITORY } from "../repositories/tokens";
+
+
 import { PrismaService } from "../../prisma/prisma.service";
 import { BORROWING_LIMITS, FINE_PER_DAY } from "../../constants";
 
@@ -27,9 +30,12 @@ export interface RenewBookParams {
 @Injectable()
 export class BorrowingDomainService {
   constructor(
-    private readonly borrowingRepo: PrismaBorrowingRepository,
-    private readonly bookRepo: PrismaBookRepository,
-    private readonly userRepo: PrismaUserRepository,
+    @Inject(BORROWING_REPOSITORY)
+    private readonly borrowingRepo: IBorrowingRepository,
+    @Inject(BOOK_REPOSITORY)
+    private readonly bookRepo: IBookRepository,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepo: IUserRepository,
     private readonly prisma: PrismaService,
   ) {}
 

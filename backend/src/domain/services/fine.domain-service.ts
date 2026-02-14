@@ -1,6 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { Fine, FineProps } from "../entities/fine.entity";
-import { PrismaFineRepository } from "../../infrastructure/repositories/prisma-fine.repository";
+import { IFineRepository } from "../repositories/fine.repository.interface";
+import { FINE_REPOSITORY } from "../repositories/tokens";
 import { FineStatus } from "../enums";
 
 export interface CreateFineParams {
@@ -23,7 +24,10 @@ export interface WaiveFineParams {
 
 @Injectable()
 export class FineDomainService {
-  constructor(private readonly fineRepo: PrismaFineRepository) {}
+  constructor(
+    @Inject(FINE_REPOSITORY)
+    private readonly fineRepo: IFineRepository,
+  ) {}
 
   async createFine(
     params: CreateFineParams,

@@ -1,14 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { User, UserProps } from "../entities/user.entity";
-import { PrismaUserRepository } from "../../infrastructure/repositories/prisma-user.repository";
+import { IUserRepository } from "../repositories/user.repository.interface";
+import { USER_REPOSITORY } from "../repositories/tokens";
 import { UserRole } from "../enums";
 
 export interface CreateUserParams {
   email: string;
   password: string;
   name: string;
-  role: Role;
+  role: UserRole;
   studentId?: string;
   teacherId?: string;
   phone?: string;
@@ -24,7 +25,10 @@ export interface UpdateUserParams {
 
 @Injectable()
 export class UserDomainService {
-  constructor(private readonly userRepo: PrismaUserRepository) {}
+  constructor(
+    @Inject(USER_REPOSITORY)
+    private readonly userRepo: IUserRepository,
+  ) {}
 
   async createUser(
     params: CreateUserParams,

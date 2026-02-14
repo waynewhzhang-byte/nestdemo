@@ -1,6 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { Book, BookProps } from "../entities/book.entity";
-import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
+import { IBookRepository } from "../repositories/book.repository.interface";
+import { BOOK_REPOSITORY } from "../repositories/tokens";
 import { BookStatus } from "../enums";
 
 export interface CreateBookParams {
@@ -44,7 +45,10 @@ export interface BookWithDetails {
 
 @Injectable()
 export class BookDomainService {
-  constructor(private readonly bookRepo: PrismaBookRepository) {}
+  constructor(
+    @Inject(BOOK_REPOSITORY)
+    private readonly bookRepo: IBookRepository,
+  ) {}
 
   async createBook(
     params: CreateBookParams,

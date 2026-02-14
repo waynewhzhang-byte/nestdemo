@@ -1,7 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { Reservation, ReservationProps } from "../entities/reservation.entity";
-import { PrismaReservationRepository } from "../../infrastructure/repositories/prisma-reservation.repository";
-import { PrismaBookRepository } from "../../infrastructure/repositories/prisma-book.repository";
+import { IReservationRepository } from "../repositories/reservation.repository.interface";
+import { RESERVATION_REPOSITORY, BOOK_REPOSITORY } from "../repositories/tokens";
+import { IBookRepository } from "../repositories/book.repository.interface";
 import { ReservationStatus } from "../enums";
 
 export interface CreateReservationParams {
@@ -15,8 +16,10 @@ const PICKUP_DEADLINE_DAYS = 3;
 @Injectable()
 export class ReservationDomainService {
   constructor(
-    private readonly reservationRepo: PrismaReservationRepository,
-    private readonly bookRepo: PrismaBookRepository,
+    @Inject(RESERVATION_REPOSITORY)
+    private readonly reservationRepo: IReservationRepository,
+    @Inject(BOOK_REPOSITORY)
+    private readonly bookRepo: IBookRepository,
   ) {}
 
   async createReservation(
