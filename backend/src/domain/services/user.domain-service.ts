@@ -19,7 +19,7 @@ export interface UpdateUserParams {
   id: string;
   name?: string;
   phone?: string;
-  role?: Role;
+  role?: UserRole;
   isActive?: boolean;
 }
 
